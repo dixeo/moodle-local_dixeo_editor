@@ -1,0 +1,136 @@
+/* content_edition */
+#page-local-dixeo_editor-content_edition #page-footer {
+    display: none;
+}
+
+#page-local-dixeo_editor-content_edition #page {
+    min-height: calc(100% - var(--navbar-height));
+}
+
+#page-local-dixeo_editor-content_edition #page #region-main {
+    padding-bottom: 0;
+}
+
+#page-local-dixeo_editor-content_edition #page .main-inner-wrapper {
+    min-height: 100%;
+}
+
+#page-local-dixeo_editor-content_edition #topofscroll {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    margin-top: 0 !important;
+    margin-bottom: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+#page-local-dixeo_editor-content_edition #topofscroll #page-header {
+    display: none;
+}
+
+#page-local-dixeo_editor-content_edition #topofscroll .secondary-navigation {
+    display: none;
+}
+
+#page-local-dixeo_editor-content_edition #topofscroll .drawer-toggles {
+    display: none !important;
+}
+
+#page-local-dixeo_editor-content_edition #page-content {
+    display: flex;
+    flex-grow: 1;
+    flex-direction: column;
+    min-width: 100%;
+    padding-bottom: 0 !important;
+}
+
+#page-local-dixeo_editor-content_edition #region-main-box {
+    display: flex;
+    flex-grow: 1;
+    flex-direction: column;
+    min-width: 100%;
+}
+
+#page-local-dixeo_editor-content_edition #region-main {
+    display: flex;
+    flex-grow: 1;
+    flex-direction: column;
+    min-width: 100%;
+}
+
+#page-local-dixeo_editor-content_edition #region-main .activity-header {
+    display: none;
+}
+
+#page-local-dixeo_editor-content_edition #region-main > div[role="main"] {
+    display: flex;
+    flex-grow: 1;
+    min-height: 100%;
+    flex-direction: column;
+    min-width: 100%;
+}
+
+/* TinyMCE */
+#content_editor #fitem_id_modulecontent {
+    flex-grow: 1;
+    margin-bottom: 0px !important;
+}
+
+#content_editor #fitem_id_modulecontent .felement {
+    min-width: 100%;
+}
+
+#content_editor #fitem_id_modulecontent .col-md-3 {
+    max-height: 0;
+    display: none !important;
+}
+
+#content_editor #fitem_id_modulecontent .col-md-9 {
+    min-height: 100%;
+    display: flex;
+    flex-grow: 1;
+    flex-direction: column;
+}
+
+#content_editor #fitem_id_modulecontent .col-md-9 > div:nth-child(1) {
+    display: flex;
+    flex-grow: 1;
+    min-height: 100%;
+    flex-direction: column;
+    min-width: 100%;
+}
+
+#content_editor #fitem_id_modulecontent .col-md-9 > div:nth-child(1) > div:nth-child(1) {
+    display: flex;
+    flex-grow: 1;
+    min-height: 100%;
+    flex-direction: column;
+    min-width: 100%;
+}
+
+#content_editor #fitem_id_modulecontent .tox-tinymce {
+    display: flex;
+    flex-grow: 1;
+    min-height: 350px;
+    flex-direction: column;
+    min-width: 100%;
+    height: 100% !important;
+}
+
+#content_editor #fitem_id_modulecontent #fitem_id_modulecontent div.tox:nth-child(2) {
+    display: flex;
+    flex-grow: 1;
+    min-height: 100%;
+    flex-direction: column;
+    min-width: 100%;
+}
+
+#content_editor #fitem_id_modulecontent .tox .tox-statusbar .tox-statusbar__resize-handle {
+    display: none;
+}
+
+/* Hide course modedit links */
+.path-mod-page .page-context-header a[href*="/course/modedit.php"] {
+    display: none;
+}

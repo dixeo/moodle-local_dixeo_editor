@@ -1,0 +1,82 @@
+<div id="content_editor" class="d-flex flex-column flex-grow-1 mt-2">
+    <div class="row justify-content-between align-items-end px-3 mb-2">
+        <h2 class="mb-0">{{ activityname }}</h2>
+        <div class="d-flex align-items-center">
+            <a  id="cancel_button"
+                href="{{cancelurl}}"
+                class="btn btn-secondary"
+                title="{{#str}} cancel, local_dixeo_editor {{/str}}"
+            >
+                <i class="fa fa-times"></i>
+            </a>
+            <button id="apply_button"
+                    type="submit"
+                    class="btn btn-success ml-2"
+                    form="mod_editor_form"
+                    title="{{#str}} save, local_dixeo_editor {{/str}}"
+            >
+                OK
+            </button>
+        </div>
+    </div>
+    <div id="content_area" class="d-flex flex-column flex-grow-1">
+        {{{formhtml}}}
+    </div>
+    <div id="footer"
+         class="d-flex flex-column bg-white w-100 p-2 mb-sm-0"
+         style="position:sticky;z-index:1039"
+    >
+        <div class="mb-2">
+            <button type="button"
+                    class="btn btn-sm btn-outline-info ai-tag-button"
+                    data-prompt="{{#str}}enrich_prompt, local_dixeo_editor{{/str}}"
+            >
+                <i class="fa fa-puzzle-piece mr-1" aria-hidden="true"></i>
+                {{#str}}enrich, local_dixeo_editor{{/str}}
+                <span class="badge badge-warning ml-1">Beta</span>
+            </button>
+            <button type="button"
+                    class="btn btn-sm btn-outline-info ai-tag-button"
+                    data-prompt="{{#str}}translate_prompt, local_dixeo_editor{{/str}}"
+            >
+                <i class="fa fa-globe mr-1" aria-hidden="true"></i>
+                {{#str}}translate, local_dixeo_editor{{/str}}
+                <span class="badge badge-warning ml-1">Beta</span>
+            </button>
+            <button type="button"
+                    class="btn btn-sm btn-outline-info ai-tag-button"
+                    data-prompt="{{#str}}prettify_prompt, local_dixeo_editor{{/str}}"
+            >
+                <i class="fa fa-tree mr-1" aria-hidden="true"></i>
+                {{#str}}prettify, local_dixeo_editor{{/str}}
+                <span class="badge badge-warning ml-1">Beta</span>
+            </button>
+        </div>
+        <div class="d-flex justify-content-center">
+            <div class="d-flex flex-column w-100">
+                <div class="position-relative">
+                    <label class="d-none" for="instructions"></label>
+                    <textarea id="instructions"
+                              class="form-control pr-6"
+                              placeholder="{{#str}} prompt_placeholder, local_dixeo_editor {{/str}}"
+                    ></textarea>
+                    <button id="generate_button"
+                            class="btn btn-secondary btn-circle position-absolute text-white"
+                            style="right: 10px; top: 50%; transform: translateY(-50%); width: 35px; height: 35px; border-radius: 50%; padding: 0;"
+                            title="{{#str}} generate, local_dixeo_editor {{/str}}"
+                    >
+                        <img src="{{config.wwwroot}}/local/dixeo/img/logo.webp"
+                             alt="Logo"
+                             style="width: 28px; height: 28px;"
+                        >
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div id="loader" class="d-none justify-content-center align-items-center mt-2">
+            <div class="spinner-border text-primary" role="status"></div>
+            <span class="ml-3">{{#str}} loading, local_dixeo_editor {{/str}}</span>
+        </div>
+        <div id="success_message_container" class="d-none justify-content-center align-items-center mt-2"></div>
+    </div>
+</div>
