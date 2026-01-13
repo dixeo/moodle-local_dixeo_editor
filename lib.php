@@ -48,35 +48,30 @@ function local_dixeo_editor_extend_navigation_course(navigation_node $navigation
     }
 }
 
-function local_dixeo_editor_add_button_to_context_header($page) {
+function local_dixeo_editor_add_button_to_activity_menu($page) {
     global $OUTPUT;
 
-    $editicon = '';
+    $actions = [];
 
     if ($page->cm->modname !== 'page') {
-        return $editicon;
+        return $actions;
     }
 
     // Check if page is the content edition page.
     $currentpath = $page->url->get_path();
     if (str_contains($currentpath, LOCAL_DIXEO_EDITOR_CONTENT_EDIT_PATH)) {
-        return $editicon;
+        return $actions;
     }
 
     if (has_capability('moodle/course:manageactivities', $page->cm->context)) {
-        $editstring = get_string('editcontent', 'local_dixeo_editor');
-        $editurl = new moodle_url(LOCAL_DIXEO_EDITOR_CONTENT_EDIT_PATH, ['cmid' => $page->cm->id]);
-        $editicon = $OUTPUT->pix_icon('t/editstring', $editstring, 'core', ['class' => 'icon']);
-        $editicon = html_writer::link(
-            $editurl,
-            $editicon,
-            [
-                'style' => 'padding: 10px 12px;',
-                'class' => 'btn btn-secondary edit-button',
-                'title' => $editstring
-            ]
-        );
+        $text = get_string('editcontent', 'local_dixeo_editor');
+
+        $actions[] = [
+            'url' => new moodle_url(LOCAL_DIXEO_EDITOR_CONTENT_EDIT_PATH, ['cmid' => $page->cm->id]),
+            'icon' => $OUTPUT->pix_icon('t/editstring', $text, 'core', ['class' => 'icon']),
+            'params' => ['class' => 'btn btn-secondary edit-button', 'title' => $text, 'style' => 'padding: 13px 12px;']
+        ];
     }
 
-    return $editicon;
+    return $actions;
 }
