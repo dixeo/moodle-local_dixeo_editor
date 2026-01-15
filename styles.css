@@ -134,3 +134,37 @@
 .path-mod-page .page-context-header a[href*="/course/modedit.php"] {
     display: none;
 }
+
+@media (max-width: 992px) {
+    #page-local-dixeo_editor-content_edition {
+        .navbar {
+            display: none;
+        }
+        
+        #page .main-inner-wrapper {
+            padding: 6px 0px;
+        }
+        
+        #content_editor div[data-fieldtype="editor"] > div {
+            width: 100% !important;
+        }
+
+        .tox .tox-toolbar--scrolling {
+            flex-wrap: wrap;
+        }
+
+        .tox-sidebar-wrap {
+            height: 300px !important;
+        }
+        
+        .ai-tag-button {
+            width: calc(50% - 10px);
+            margin: 4px;
+            padding: 10px;
+        }
+        
+        #footer {
+            padding: 8px 0 !important;
+        }
+    }
+}
