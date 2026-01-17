@@ -69,7 +69,7 @@ function local_dixeo_editor_add_button_to_activity_menu($page) {
         $actions[] = [
             'url' => new moodle_url(LOCAL_DIXEO_EDITOR_CONTENT_EDIT_PATH, ['cmid' => $page->cm->id]),
             'icon' => $OUTPUT->pix_icon('t/editstring', $text, 'core', ['class' => 'icon']),
-            'params' => ['class' => 'btn btn-secondary edit-button', 'title' => $text, 'style' => 'padding: 13px 12px;']
+            'params' => ['class' => 'btn btn-secondary edit-button', 'title' => $text, 'style' => 'padding: 13px 15px;']
         ];
     }
 
