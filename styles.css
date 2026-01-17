@@ -190,3 +190,13 @@
         }
     }
 }
+
+@media (max-width: 567px) {
+    #content_editor #fitem_id_modulecontent .tox-tinymce {
+        min-height: 350px;
+    }
+
+    #page-local-dixeo_editor-content_edition #page.drawers .main-inner #region-main div[role="main"] {
+        max-height: 100% !important;
+    }
+}
