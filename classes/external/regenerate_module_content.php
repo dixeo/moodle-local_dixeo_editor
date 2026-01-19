@@ -80,17 +80,19 @@ class regenerate_module_content extends external_api {
             ];
         }
 
-        // Handle pending (timeout) vs failed states.
-        if ($result->is_pending()) {
+        // Handle failed vs pending (timeout) states.
+        // IMPORTANT: Check is_failed() BEFORE is_pending() because failed results also have completed=false.
+        if ($result->is_failed()) {
             return [
                 'success' => false,
-                'error' => ['message' => 'The AI is still processing your request. Please try again in a moment.'],
+                'error' => ['message' => $result->get_error_message() ?? 'An unexpected error occurred'],
             ];
         }
 
+        // Job is still processing (timeout waiting for completion).
         return [
             'success' => false,
-            'error' => ['message' => $result->get_error_message() ?? 'An unexpected error occurred'],
+            'error' => ['message' => 'The AI is still processing your request. Please try again in a moment.'],
         ];
     }
 
