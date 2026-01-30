@@ -49,7 +49,7 @@ function local_dixeo_editor_extend_navigation_course(navigation_node $navigation
 }
 
 function local_dixeo_editor_add_button_to_activity_menu($page) {
-    global $OUTPUT;
+    global $OUTPUT, $USER;
 
     $actions = [];
 
@@ -60,6 +60,12 @@ function local_dixeo_editor_add_button_to_activity_menu($page) {
     // Check if page is the content edition page.
     $currentpath = $page->url->get_path();
     if (str_contains($currentpath, LOCAL_DIXEO_EDITOR_CONTENT_EDIT_PATH)) {
+        return $actions;
+    }
+
+    // Check if the user is an student.
+    $isstudent = !is_enrolled($page->context, $USER, 'moodle/course:update');
+    if ($isstudent) {
         return $actions;
     }
 
