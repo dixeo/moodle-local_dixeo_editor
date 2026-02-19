@@ -29,7 +29,7 @@
         <div class="mb-2">
             <button type="button"
                     class="btn btn-sm btn-outline-info ai-tag-button"
-                    data-prompt="{{#str}}enrich_prompt, local_dixeo_editor{{/str}}"
+                    data-prompt="{{#str}}enrichprompt, local_dixeo_editor{{/str}}"
             >
                 <i class="fa fa-puzzle-piece mr-1" aria-hidden="true"></i>
                 {{#str}}enrich, local_dixeo_editor{{/str}}
@@ -37,7 +37,7 @@
             </button>
             <button type="button"
                     class="btn btn-sm btn-outline-info ai-tag-button"
-                    data-prompt="{{#str}}translate_prompt, local_dixeo_editor{{/str}}"
+                    data-prompt="{{#str}}translateprompt, local_dixeo_editor{{/str}}"
             >
                 <i class="fa fa-globe mr-1" aria-hidden="true"></i>
                 {{#str}}translate, local_dixeo_editor{{/str}}
@@ -45,7 +45,7 @@
             </button>
             <button type="button"
                     class="btn btn-sm btn-outline-info ai-tag-button"
-                    data-prompt="{{#str}}prettify_prompt, local_dixeo_editor{{/str}}"
+                    data-prompt="{{#str}}prettifyprompt, local_dixeo_editor{{/str}}"
             >
                 <i class="fa fa-tree mr-1" aria-hidden="true"></i>
                 {{#str}}prettify, local_dixeo_editor{{/str}}
@@ -58,7 +58,7 @@
                     <label class="d-none" for="instructions"></label>
                     <textarea id="instructions"
                               class="form-control pr-6"
-                              placeholder="{{#str}} prompt_placeholder, local_dixeo_editor {{/str}}"
+                              placeholder="{{#str}}promptplaceholder, local_dixeo_editor{{/str}}"
                     ></textarea>
                     <button id="generate_button"
                             class="btn btn-secondary btn-circle position-absolute text-white"
