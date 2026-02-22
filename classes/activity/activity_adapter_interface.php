@@ -31,6 +31,12 @@ use moodle_url;
 interface activity_adapter_interface {
 
     /**
+     * Return the DB/API field name used for content (e.g. 'content', 'intro').
+     * Used when extracting generated content from operation results by module type.
+     */
+    public function get_content_field(): string;
+
+    /**
      * Return the main content to be edited.
      */
     public function get_content(): string;

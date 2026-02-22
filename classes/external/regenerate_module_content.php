@@ -31,6 +31,7 @@ use core_external\external_single_structure;
 use core_external\external_value;
 use context_module;
 use local_dixeo\service\module_generation_service;
+use local_dixeo_editor\activity\activity_adapter_factory;
 
 /**
  * Regenerate module content using AI via the Dixeo service.
@@ -57,6 +58,8 @@ class regenerate_module_content extends external_api {
      * @return array Response with success status, data or error.
      */
     public static function execute(int $cmid, string $instructions): array {
+        global $DB;
+
         // Validate parameters.
         $params = self::validate_parameters(self::execute_parameters(), [
             'cmid' => $cmid,
@@ -69,14 +72,27 @@ class regenerate_module_content extends external_api {
         self::validate_context($context);
         require_capability('moodle/course:manageactivities', $context);
 
+        $supported = activity_adapter_factory::get_supported_types();
+        if (!in_array($cm->modname, $supported, true)) {
+            return [
+                'success' => false,
+                'error' => ['message' => 'Content regeneration is not supported for this activity type.'],
+            ];
+        }
+
         // Call the Dixeo service to edit the module.
         $service = new module_generation_service();
         $result = $service->edit_module($params['cmid'], $params['instructions']);
 
         if ($result->is_success()) {
+            $adapter = (new activity_adapter_factory($DB))->create($params['cmid']);
+            $contentfield = $adapter->get_content_field();
+            $content = $result->result !== null
+                ? ($result->result['data'][$contentfield] ?? '')
+                : '';
             return [
                 'success' => true,
-                'data' => ['content' => $result->get_content() ?? ''],
+                'data' => ['content' => $content],
             ];
         }
 

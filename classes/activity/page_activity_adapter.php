@@ -18,7 +18,7 @@ class page_activity_adapter extends base_activity_adapter {
         return 'page';
     }
 
-    protected function get_content_field(): string {
+    public function get_content_field(): string {
         return 'content';
     }
 

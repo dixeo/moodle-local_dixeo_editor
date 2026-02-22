@@ -41,7 +41,7 @@ abstract class base_activity_adapter implements activity_adapter_interface {
     /**
      * Return the DB column name for the content field.
      */
-    abstract protected function get_content_field(): string;
+    abstract public function get_content_field(): string;
 
     /**
      * Return the DB column name for the format field.

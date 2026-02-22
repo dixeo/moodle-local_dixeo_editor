@@ -18,7 +18,7 @@ class label_activity_adapter extends base_activity_adapter {
         return 'label';
     }
 
-    protected function get_content_field(): string {
+    public function get_content_field(): string {
         return 'intro';
     }
 
