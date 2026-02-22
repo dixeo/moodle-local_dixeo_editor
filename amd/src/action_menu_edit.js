@@ -22,8 +22,9 @@ define(['core/str'], function(str) {
                     return;
                 }
 
-                // Only target label activities based on their CSS class.
-                if (!activityContainer.classList.contains('modtype_label')) {
+                // Only target label or page activities based on their CSS class.
+                if (!activityContainer.classList.contains('modtype_label') &&
+                    !activityContainer.classList.contains('modtype_page')) {
                     return;
                 }
 
