@@ -41,5 +41,5 @@ $string['enrich'] = 'Arricchisci';
 $string['translateprompt'] = 'Traduci il contenuto in LINGUA';
 $string['enrichprompt'] = 'Migliora il contenuto per scopi educativi aggiungendo spiegazioni dettagliate, esempi pertinenti e contesto per rendere il materiale più completo e coinvolgente per gli studenti. Garantisci chiarezza, accuratezza e un tono accessibile adatto a un pubblico diversificato';
 $string['prettify'] = 'Abbellire';
-$string[‘prettifyprompt’] = ‘Migliora il contenuto per scopi educativi rendendolo più attraente visivamente utilizzando i principi di design moderni. Aggiungi colori appropriati, grassetto, corsivo e altri stili di formattazione per enfatizzare i termini chiave, i titoli e le idee. Utilizza un’estetica pulita e coinvolgente senza alterare il contenuto originale’;
+$string['prettifyprompt'] = 'Migliora il contenuto per scopi educativi rendendolo più attraente visivamente utilizzando i principi di design moderni. Aggiungi colori appropriati, grassetto, corsivo e altri stili di formattazione per enfatizzare i termini chiave, i titoli e le idee. Utilizza un’estetica pulita e coinvolgente senza alterare il contenuto originale';
 
