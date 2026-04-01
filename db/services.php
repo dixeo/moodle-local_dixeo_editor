@@ -33,4 +33,25 @@ $functions = [
         'ajax'        => true,
         'capabilities' => 'moodle/course:manageactivities',
     ],
+    'local_dixeo_editor_start_regenerate_module_content' => [
+        'classname'   => 'local_dixeo_editor\external\start_regenerate_module_content',
+        'description' => 'Start asynchronous module content regeneration job',
+        'type'        => 'write',
+        'ajax'        => true,
+        'capabilities' => 'moodle/course:manageactivities',
+    ],
+    'local_dixeo_editor_get_regenerate_module_content_status' => [
+        'classname'   => 'local_dixeo_editor\external\get_regenerate_module_content_status',
+        'description' => 'Get asynchronous module content regeneration job status',
+        'type'        => 'read',
+        'ajax'        => true,
+        'capabilities' => 'moodle/course:manageactivities',
+    ],
+    'local_dixeo_editor_cancel_regenerate_module_content' => [
+        'classname'   => 'local_dixeo_editor\external\cancel_regenerate_module_content',
+        'description' => 'Cancel asynchronous module content regeneration job',
+        'type'        => 'write',
+        'ajax'        => true,
+        'capabilities' => 'moodle/course:manageactivities',
+    ],
 ];

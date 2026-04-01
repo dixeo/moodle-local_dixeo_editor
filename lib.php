@@ -80,3 +80,41 @@ function local_dixeo_editor_add_button_to_context_header($page) {
 
     return $editicon;
 }
+
+/**
+ * Add edit content button to the activity menu.
+ *
+ * @param \moodle_page $page Current page.
+ * @return array List of action link data for the activity menu.
+ */
+function local_dixeo_editor_add_button_to_activity_menu($page) {
+    global $OUTPUT, $USER;
+
+    $actions = [];
+
+    if ($page->cm->modname !== 'page') {
+        return $actions;
+    }
+
+    // Check if page is the content edition page.
+    $currentpath = $page->url->get_path();
+    if (str_contains($currentpath, LOCAL_DIXEO_EDITOR_CONTENT_EDIT_PATH)) {
+        return $actions;
+    }
+
+    // Check if the user is an student.
+    $isstudent = !is_enrolled($page->context, $USER, 'moodle/course:update');
+    if ($isstudent) {
+        return $actions;
+    }
+
+    $text = get_string('editcontent', 'local_dixeo_editor');
+
+    $actions[] = [
+        'url' => new moodle_url(LOCAL_DIXEO_EDITOR_CONTENT_EDIT_PATH, array('cmid' => $page->cm->id)),
+        'icon' => $OUTPUT->pix_icon('t/editstring', $text, 'core', ['class' => 'icon']),
+        'params' => ['class' => 'btn btn-secondary edit-button', 'title' => $text, 'style' => 'padding: 13px 15px;']
+    ];
+
+    return $actions;
+}

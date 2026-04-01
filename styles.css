@@ -72,36 +72,28 @@
 }
 
 /* TinyMCE */
-#content_editor #fitem_id_modulecontent {
+#page-local-dixeo_editor-content_edition #content_editor #fitem_id_modulecontent {
     flex-grow: 1;
     margin-bottom: 0px !important;
 }
 
-#content_editor #fitem_id_modulecontent .felement {
+#page-local-dixeo_editor-content_edition #content_editor #fitem_id_modulecontent .felement {
     min-width: 100%;
 }
 
-#content_editor #fitem_id_modulecontent .col-md-3 {
+#page-local-dixeo_editor-content_edition #content_editor #fitem_id_modulecontent .col-md-3 {
     max-height: 0;
     display: none !important;
 }
 
-#content_editor #fitem_id_modulecontent .col-md-9 {
+#page-local-dixeo_editor-content_edition #content_editor #fitem_id_modulecontent .col-md-9 {
     min-height: 100%;
     display: flex;
     flex-grow: 1;
     flex-direction: column;
 }
 
-#content_editor #fitem_id_modulecontent .col-md-9 > div:nth-child(1) {
-    display: flex;
-    flex-grow: 1;
-    min-height: 100%;
-    flex-direction: column;
-    min-width: 100%;
-}
-
-#content_editor #fitem_id_modulecontent .col-md-9 > div:nth-child(1) > div:nth-child(1) {
+#page-local-dixeo_editor-content_edition #content_editor #fitem_id_modulecontent .col-md-9 > div:nth-child(1) {
     display: flex;
     flex-grow: 1;
     min-height: 100%;
@@ -109,7 +101,15 @@
     min-width: 100%;
 }
 
-#content_editor #fitem_id_modulecontent .tox-tinymce {
+#page-local-dixeo_editor-content_edition #content_editor #fitem_id_modulecontent .col-md-9 > div:nth-child(1) > div:nth-child(1) {
+    display: flex;
+    flex-grow: 1;
+    min-height: 100%;
+    flex-direction: column;
+    min-width: 100%;
+}
+
+#page-local-dixeo_editor-content_edition #content_editor #fitem_id_modulecontent .tox-tinymce {
     display: flex;
     flex-grow: 1;
     min-height: 350px;
@@ -118,7 +118,7 @@
     height: 100% !important;
 }
 
-#content_editor #fitem_id_modulecontent #fitem_id_modulecontent div.tox:nth-child(2) {
+#page-local-dixeo_editor-content_edition #content_editor #fitem_id_modulecontent #fitem_id_modulecontent div.tox:nth-child(2) {
     display: flex;
     flex-grow: 1;
     min-height: 100%;
@@ -126,11 +126,313 @@
     min-width: 100%;
 }
 
-#content_editor #fitem_id_modulecontent .tox .tox-statusbar .tox-statusbar__resize-handle {
+#page-local-dixeo_editor-content_edition #content_editor #fitem_id_modulecontent .tox .tox-statusbar .tox-statusbar__resize-handle {
     display: none;
 }
 
 /* Hide course modedit links */
-.path-mod-page .page-context-header a[href*="/course/modedit.php"] {
+#page-local-dixeo_editor-content_edition.path-mod-page .page-context-header a[href*="/course/modedit.php"],
+#page-local-dixeo_editor-content.path-mod-page .page-context-header a[href*="/course/modedit.php"] {
     display: none;
+}
+
+/* content */
+#page-local-dixeo_editor-content #page-footer {
+    display: none;
+}
+
+#page-local-dixeo_editor-content #page {
+    min-height: calc(100% - var(--navbar-height));
+}
+
+#page-local-dixeo_editor-content #page #region-main {
+    padding-bottom: 0;
+}
+
+#page-local-dixeo_editor-content #topofscroll,
+#page-local-dixeo_editor-content #page #region-main {
+    padding: 0;
+}
+
+#page-local-dixeo_editor-content #page .main-inner-wrapper,
+#page-local-dixeo_editor-content #topofscroll,
+#page-local-dixeo_editor-content #page-content,
+#page-local-dixeo_editor-content #region-main-box,
+#page-local-dixeo_editor-content #region-main,
+#page-local-dixeo_editor-content #region-main > div[role="main"] {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    min-height: 100%;
+    min-width: 100%;
+}
+
+#page-local-dixeo_editor-content #topofscroll #page-header,
+#page-local-dixeo_editor-content #topofscroll .secondary-navigation,
+#page-local-dixeo_editor-content #topofscroll .drawer-toggles {
+    display: none !important;
+}
+
+#page-local-dixeo_editor-content #indexlogo,
+#page-local-dixeo_editor-content #page.drawers .activity-header,
+#page-local-dixeo_editor-content #frost-bg {
+    display: none !important;
+}
+
+#page-local-dixeo_editor-content #page.drawers .main-inner #region-main div[role="main"] {
+    padding: 1rem !important;
+}
+
+#page-local-dixeo_editor-content #content_editor {
+    min-height: 100%;
+}
+
+#page-local-dixeo_editor-content #content_area {
+    min-height: 0;
+}
+
+#page-local-dixeo_editor-content #content_editor #fitem_id_modulecontent {
+    flex-grow: 1;
+    margin-bottom: 0 !important;
+}
+
+#page-local-dixeo_editor-content #content_editor #fitem_id_modulecontent .felement,
+#page-local-dixeo_editor-content #content_editor #fitem_id_modulecontent .col-md-9,
+#page-local-dixeo_editor-content #content_editor #fitem_id_modulecontent .col-md-9 > div:nth-child(1),
+#page-local-dixeo_editor-content #content_editor #fitem_id_modulecontent .col-md-9 > div:nth-child(1) > div:nth-child(1),
+#page-local-dixeo_editor-content #content_editor #fitem_id_modulecontent #fitem_id_modulecontent div.tox:nth-child(2) {
+    min-width: 100%;
+    min-height: 100%;
+    display: flex;
+    flex-grow: 1;
+    flex-direction: column;
+}
+
+#page-local-dixeo_editor-content #content_editor #fitem_id_modulecontent .col-md-3 {
+    max-height: 0;
+    display: none !important;
+}
+
+#page-local-dixeo_editor-content #content_editor #fitem_id_modulecontent .tox-tinymce {
+    display: flex;
+    flex-grow: 1;
+    min-height: 350px;
+    min-width: 100%;
+    height: 100% !important;
+}
+
+#page-local-dixeo_editor-content #content_editor #fitem_id_modulecontent .tox .tox-statusbar .tox-statusbar__resize-handle {
+    display: none;
+}
+
+#page-local-dixeo_editor-content #content_editor_footer {
+    border-top: 1px solid var(--gray-300);
+    background: #fff;
+    z-index: 1030;
+}
+
+#page-local-dixeo_editor-content #dixeo_editor_fab {
+    position: fixed;
+    right: 2rem;
+    bottom: 2rem;
+    z-index: 1060;
+    width: 52px;
+    height: 52px;
+    border-radius: 999px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
+}
+
+#page-local-dixeo_editor-content .dixeo-editor-fab-logo {
+    width: 28px;
+    height: 28px;
+}
+
+#page-local-dixeo_editor-content #dixeo_editor_panel_backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.38);
+    z-index: 1050;
+}
+
+#page-local-dixeo_editor-content #dixeo_editor_panel_backdrop.is-locked {
+    background: rgba(0, 0, 0, 0.5);
+}
+
+#page-local-dixeo_editor-content #dixeo_editor_panel {
+    position: fixed;
+    right: 2rem;
+    bottom: 5.8rem;
+    width: 600px;
+    min-width: 360px;
+    min-height: 320px;
+    max-width: calc(100vw - 2rem);
+    max-height: calc(100vh - 8rem);
+    background: #fff;
+    border-radius: 0.75rem;
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.22);
+    z-index: 1061;
+    display: flex;
+    flex-direction: column;
+    overflow: visible;
+}
+
+#page-local-dixeo_editor-content #dixeo_editor_panel.dixeo-editor-panel-resizing {
+    max-width: none;
+    max-height: none;
+}
+
+#page-local-dixeo_editor-content #dixeo_editor_panel > header {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--gray-200);
+    cursor: grab;
+    user-select: none;
+}
+
+#page-local-dixeo_editor-content #dixeo_editor_panel.dixeo-editor-panel-dragging > header {
+    cursor: grabbing;
+}
+
+#page-local-dixeo_editor-content .dixeo-editor-panel-body {
+    padding: 0.75rem;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+#page-local-dixeo_editor-content .dixeo-editor-menu-grid {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 0.5rem;
+}
+
+#page-local-dixeo_editor-content .dixeo-editor-menu-grid .dropdown {
+    flex: 0 0 auto;
+}
+
+#page-local-dixeo_editor-content .dixeo-editor-menu-grid .dropdown-toggle {
+    white-space: nowrap;
+    min-width: 40px;
+    justify-content: center;
+}
+
+#page-local-dixeo_editor-content .dropdown-menu {
+    width: fit-content !important;
+}
+
+#page-local-dixeo_editor-content #instructions {
+    min-height: 0;
+    height: 100%;
+    flex: 1 1 auto;
+    resize: vertical;
+}
+
+#page-local-dixeo_editor-content .dixeo-editor-prompt-wrap {
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+#page-local-dixeo_editor-content .dixeo-generate-logo {
+    width: 16px;
+    height: 16px;
+}
+
+#page-local-dixeo_editor-content #dixeo_editor_panel .btn {
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
+}
+
+#page-local-dixeo_editor-content #dixeo_editor_panel.is-locked .dropdown-toggle,
+#page-local-dixeo_editor-content #dixeo_editor_panel.is-locked .ai-prompt-option,
+#page-local-dixeo_editor-content #dixeo_editor_panel.is-locked #instructions,
+#page-local-dixeo_editor-content #dixeo_editor_panel.is-locked #undo_button,
+#page-local-dixeo_editor-content #dixeo_editor_panel.is-locked #redo_button {
+    pointer-events: none;
+    opacity: 0.55;
+}
+
+@media (max-width: 992px) {
+    #page-local-dixeo_editor-content #dixeo_editor_fab {
+        right: 1rem;
+        bottom: 1rem;
+    }
+
+    #page-local-dixeo_editor-content #dixeo_editor_panel {
+        right: 1rem;
+        bottom: 4.8rem;
+        width: calc(100vw - 2rem);
+        max-height: calc(100vh - 6rem);
+    }
+}
+
+body#page-local-dixeo_editor-content.dixeo-editor-dragging {
+    user-select: none;
+}
+
+body#page-local-dixeo_editor-content.dixeo-editor-resizing {
+    user-select: none;
+}
+
+body#page-local-dixeo_editor-content.dixeo-editor-resizing-active #dixeo_editor_panel iframe,
+body#page-local-dixeo_editor-content.dixeo-editor-resizing-active #dixeo_editor_panel .tox,
+body#page-local-dixeo_editor-content.dixeo-editor-resizing-active #dixeo_editor_panel .dixeo-editor-panel-body > *:not(.dixeo-editor-resize-handle) {
+    pointer-events: none;
+}
+
+#page-local-dixeo_editor-content .dixeo-editor-resize-handle {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    z-index: 3;
+    background: transparent;
+}
+
+#page-local-dixeo_editor-content .dixeo-editor-resize-tl {
+    top: -6px;
+    left: -6px;
+}
+
+#page-local-dixeo_editor-content .dixeo-editor-resize-tr {
+    top: -6px;
+    right: -6px;
+}
+
+#page-local-dixeo_editor-content .dixeo-editor-resize-bl {
+    bottom: -6px;
+    left: -6px;
+}
+
+#page-local-dixeo_editor-content .dixeo-editor-resize-br {
+    bottom: -6px;
+    right: -6px;
+}
+
+#page-local-dixeo_editor-content .dixeo-editor-resize-l {
+    top: 10px;
+    left: -6px;
+    bottom: 10px;
+    width: 12px;
+    height: auto;
+}
+
+#page-local-dixeo_editor-content .dixeo-editor-resize-r {
+    top: 10px;
+    right: -6px;
+    bottom: 10px;
+    width: 12px;
+    height: auto;
+}
+
+#page-local-dixeo_editor-content .dixeo-editor-resize-b {
+    left: 10px;
+    right: 10px;
+    bottom: -6px;
+    height: 12px;
+    width: auto;
 }

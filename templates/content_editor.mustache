@@ -1,0 +1,191 @@
+<div id="content_editor" class="d-flex flex-column flex-grow-1">
+    <div class="d-flex justify-content-between align-items-center px-3 py-2">
+        <h2 class="mb-0">{{ activityname }}</h2>
+    </div>
+
+    <div id="content_area" class="d-flex flex-column flex-grow-1">
+        {{{formhtml}}}
+    </div>
+
+    <div id="content_editor_footer" class="d-flex justify-content-end align-items-center p-2">
+        <a id="cancel_button"
+           href="{{cancelurl}}"
+           class="btn btn-secondary"
+           title="{{#str}} cancelshort, local_dixeo_editor {{/str}}">
+            {{#str}} cancelshort, local_dixeo_editor {{/str}}
+        </a>
+        <button id="save_button"
+                type="submit"
+                class="btn btn-primary ml-2"
+                form="mod_editor_form"
+                title="{{#str}} save, local_dixeo_editor {{/str}}">
+            {{#str}} save, local_dixeo_editor {{/str}}
+        </button>
+    </div>
+
+    <button id="dixeo_editor_fab"
+            class="btn btn-primary"
+            type="button"
+            aria-label="{{#str}} aipanelopen, local_dixeo_editor {{/str}}"
+            title="{{#str}} aipanelopen, local_dixeo_editor {{/str}}">
+        <img src="{{config.wwwroot}}/local/dixeo_editor/pix/dixeo-white.svg"
+             alt=""
+             class="dixeo-editor-fab-logo">
+    </button>
+
+    <div id="dixeo_editor_panel_backdrop" class="d-none"></div>
+
+    <section id="dixeo_editor_panel" class="d-none" aria-hidden="true">
+        <header class="d-flex justify-content-between align-items-center">
+            <h3 class="mb-0">{{#str}} aipaneltitle, local_dixeo_editor {{/str}}</h3>
+            <button id="dixeo_editor_panel_close"
+                    type="button"
+                    class="btn btn-link p-0"
+                    aria-label="{{#str}} panelclose, local_dixeo_editor {{/str}}">
+                <i class="fa fa-times" aria-hidden="true"></i>
+            </button>
+        </header>
+
+        <div class="dixeo-editor-panel-body">
+            <div class="dixeo-editor-menu-grid mb-2">
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-toggle="dropdown"
+                            title="{{#str}} menu_structure, local_dixeo_editor {{/str}}"
+                            aria-label="{{#str}} menu_structure, local_dixeo_editor {{/str}}">
+                        <i class="fa fa-sitemap" aria-hidden="true"></i>
+                    </button>
+                    <div class="dropdown-menu w-100">
+                        <button type="button" class="dropdown-item ai-prompt-option" data-prompt="{{#str}} prompt_structure_reorganize, local_dixeo_editor {{/str}}">
+                            <i class="fa fa-sort mr-2" aria-hidden="true"></i>{{#str}} structure_reorganize, local_dixeo_editor {{/str}}
+                        </button>
+                        <button type="button" class="dropdown-item ai-prompt-option" data-prompt="{{#str}} prompt_structure_headings, local_dixeo_editor {{/str}}">
+                            <i class="fa fa-heading mr-2" aria-hidden="true"></i>{{#str}} structure_headings, local_dixeo_editor {{/str}}
+                        </button>
+                        <button type="button" class="dropdown-item ai-prompt-option" data-prompt="{{#str}} prompt_structure_intro, local_dixeo_editor {{/str}}">
+                            <i class="fa fa-sign-in-alt mr-2" aria-hidden="true"></i>{{#str}} structure_intro, local_dixeo_editor {{/str}}
+                        </button>
+                        <button type="button" class="dropdown-item ai-prompt-option" data-prompt="{{#str}} prompt_structure_conclusion, local_dixeo_editor {{/str}}">
+                            <i class="fa fa-flag-checkered mr-2" aria-hidden="true"></i>{{#str}} structure_conclusion, local_dixeo_editor {{/str}}
+                        </button>
+                    </div>
+                </div>
+
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-toggle="dropdown"
+                            title="{{#str}} menu_tone, local_dixeo_editor {{/str}}"
+                            aria-label="{{#str}} menu_tone, local_dixeo_editor {{/str}}">
+                        <i class="fa fa-sliders-h" aria-hidden="true"></i>
+                    </button>
+                    <div class="dropdown-menu w-100">
+                        <button type="button" class="dropdown-item ai-prompt-option" data-prompt="{{#str}} prompt_tone_casual, local_dixeo_editor {{/str}}">
+                            <i class="fa fa-comment-dots mr-2" aria-hidden="true"></i>{{#str}} tone_casual, local_dixeo_editor {{/str}}
+                        </button>
+                        <button type="button" class="dropdown-item ai-prompt-option" data-prompt="{{#str}} prompt_tone_formal, local_dixeo_editor {{/str}}">
+                            <i class="fa fa-university mr-2" aria-hidden="true"></i>{{#str}} tone_formal, local_dixeo_editor {{/str}}
+                        </button>
+                    </div>
+                </div>
+
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-toggle="dropdown"
+                            title="{{#str}} menu_length, local_dixeo_editor {{/str}}"
+                            aria-label="{{#str}} menu_length, local_dixeo_editor {{/str}}">
+                        <i class="fa fa-text-width" aria-hidden="true"></i>
+                    </button>
+                    <div class="dropdown-menu w-100">
+                        <button type="button" class="dropdown-item ai-prompt-option" data-prompt="{{#str}} prompt_length_expand, local_dixeo_editor {{/str}}">
+                            <i class="fa fa-expand-alt mr-2" aria-hidden="true"></i>{{#str}} length_expand, local_dixeo_editor {{/str}}
+                        </button>
+                        <button type="button" class="dropdown-item ai-prompt-option" data-prompt="{{#str}} prompt_length_shorten, local_dixeo_editor {{/str}}">
+                            <i class="fa fa-compress-alt mr-2" aria-hidden="true"></i>{{#str}} length_shorten, local_dixeo_editor {{/str}}
+                        </button>
+                    </div>
+                </div>
+
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-toggle="dropdown"
+                            title="{{#str}} menu_audience, local_dixeo_editor {{/str}}"
+                            aria-label="{{#str}} menu_audience, local_dixeo_editor {{/str}}">
+                        <i class="fa fa-users" aria-hidden="true"></i>
+                    </button>
+                    <div class="dropdown-menu w-100">
+                        <button type="button" class="dropdown-item ai-prompt-option" data-prompt="{{#str}} prompt_audience_beginner, local_dixeo_editor {{/str}}">
+                            <i class="fa fa-seedling mr-2" aria-hidden="true"></i>{{#str}} audience_beginner, local_dixeo_editor {{/str}}
+                        </button>
+                        <button type="button" class="dropdown-item ai-prompt-option" data-prompt="{{#str}} prompt_audience_intermediate, local_dixeo_editor {{/str}}">
+                            <i class="fa fa-user-graduate mr-2" aria-hidden="true"></i>{{#str}} audience_intermediate, local_dixeo_editor {{/str}}
+                        </button>
+                        <button type="button" class="dropdown-item ai-prompt-option" data-prompt="{{#str}} prompt_audience_expert, local_dixeo_editor {{/str}}">
+                            <i class="fa fa-microscope mr-2" aria-hidden="true"></i>{{#str}} audience_expert, local_dixeo_editor {{/str}}
+                        </button>
+                    </div>
+                </div>
+
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-toggle="dropdown"
+                            title="{{#str}} menu_tools, local_dixeo_editor {{/str}}"
+                            aria-label="{{#str}} menu_tools, local_dixeo_editor {{/str}}">
+                        <i class="fa fa-tools" aria-hidden="true"></i>
+                    </button>
+                    <div class="dropdown-menu w-100">
+                        <button type="button" class="dropdown-item ai-prompt-option" data-prompt="{{#str}} prompt_tools_translate, local_dixeo_editor {{/str}}">
+                            <i class="fa fa-language mr-2" aria-hidden="true"></i>{{#str}} tools_translate, local_dixeo_editor {{/str}}
+                        </button>
+                        <button type="button" class="dropdown-item ai-prompt-option" data-prompt="{{#str}} prompt_tools_grammar, local_dixeo_editor {{/str}}">
+                            <i class="fa fa-spell-check mr-2" aria-hidden="true"></i>{{#str}} tools_grammar, local_dixeo_editor {{/str}}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="success_message_container" class="d-none mb-2"></div>
+
+            <div class="d-flex flex-column dixeo-editor-prompt-wrap">
+                <label class="d-none" for="instructions">{{#str}} promptplaceholder, local_dixeo_editor {{/str}}</label>
+                <textarea id="instructions"
+                          class="form-control"
+                          placeholder="{{#str}} promptplaceholder, local_dixeo_editor {{/str}}"></textarea>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mt-2">
+                <div class="d-flex">
+                    <button id="undo_button"
+                            type="button"
+                            class="btn btn-sm btn-outline-secondary"
+                            title="{{#str}} undo, local_dixeo_editor {{/str}}"
+                            disabled>
+                        <i class="fa fa-undo" aria-hidden="true"></i>
+                    </button>
+                    <button id="redo_button"
+                            type="button"
+                            class="btn btn-sm btn-outline-secondary ml-2"
+                            title="{{#str}} redo, local_dixeo_editor {{/str}}"
+                            disabled>
+                        <i class="fa fa-redo" aria-hidden="true"></i>
+                    </button>
+                </div>
+                <div class="d-flex">
+                    <button id="panel_cancel_generation_button"
+                            type="button"
+                            class="btn btn-secondary d-none">
+                        {{#str}} cancelshort, local_dixeo_editor {{/str}}
+                    </button>
+                    <button id="panel_close_button"
+                            type="button"
+                            class="btn btn-secondary">
+                        {{#str}} close, local_dixeo_editor {{/str}}
+                    </button>
+                    <button id="generate_button"
+                            type="button"
+                            class="btn btn-primary ml-2">
+                        <img src="{{config.wwwroot}}/local/dixeo_editor/pix/dixeo-white.svg"
+                             alt=""
+                             class="dixeo-generate-logo mr-1">
+                        <i class="fa fa-spinner fa-spin d-none mr-1" aria-hidden="true"></i>
+                        <span class="generate-label">{{#str}} generate, local_dixeo_editor {{/str}}</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
