@@ -506,6 +506,22 @@ define([
                     Templates.runTemplateJS(rendered.js);
                 }
                 self.dom.successContainer.classList.remove('d-none');
+                window.setTimeout(function() {
+                    var container = self.dom.successContainer;
+                    if (!container || !container.isConnected) {
+                        return;
+                    }
+                    var closeBtn = container.querySelector('button[data-dismiss="alert"], button.close');
+                    if (closeBtn) {
+                        closeBtn.click();
+                    }
+                    window.setTimeout(function() {
+                        if (container && container.isConnected) {
+                            container.classList.add('d-none');
+                            container.innerHTML = '';
+                        }
+                    }, 300);
+                }, 5000);
             }).catch(function(error) {
                 Notification.exception(error);
             });
