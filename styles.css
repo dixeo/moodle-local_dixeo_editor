@@ -183,6 +183,43 @@
     padding: 1rem !important;
 }
 
+/* Floating panel: center page when course index drawer is open */
+body#page-local-dixeo_editor-content:not(.dixeo-editor-layout-docked) #page-wrapper #page.drawers.show-drawer-left {
+    margin: 0 auto !important;
+}
+
+/* Root wraps editor column + dock slots; #content_editor stays inside and is never reparented */
+#page-local-dixeo_editor-content #dixeo_editor_layout_root {
+    min-height: 0;
+}
+
+#page-local-dixeo_editor-content #dixeo_editor_layout_root.dixeo-editor-layout-mode-float {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0;
+    min-height: 0;
+}
+
+#page-local-dixeo_editor-content #dixeo_editor_editor_section {
+    min-height: 0;
+}
+
+/* Float: panel stays in zero-size host so fixed positioning works (ancestor not display:none) */
+#page-local-dixeo_editor-content #dixeo_editor_layout_root.dixeo-editor-layout-mode-float #dixeo_editor_dock_panel_host {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 0;
+    height: 0;
+    overflow: visible;
+    z-index: 2;
+    pointer-events: none;
+}
+
+#page-local-dixeo_editor-content #dixeo_editor_layout_root.dixeo-editor-layout-mode-float #dixeo_editor_panel {
+    pointer-events: auto;
+}
+
 #page-local-dixeo_editor-content #content_editor {
     min-height: 100%;
 }
@@ -268,7 +305,7 @@
     bottom: 5.8rem;
     width: 600px;
     min-width: 360px;
-    min-height: 320px;
+    min-height: 270px;
     max-width: calc(100vw - 2rem);
     max-height: calc(100vh - 8rem);
     background: #fff;
@@ -298,7 +335,6 @@
 
 #page-local-dixeo_editor-content .dixeo-editor-panel-body {
     padding: 0.75rem;
-    overflow: hidden;
     display: flex;
     flex-direction: column;
     flex: 1 1 auto;
@@ -319,6 +355,22 @@
     white-space: nowrap;
     min-width: 40px;
     justify-content: center;
+}
+
+/*
+ * Tools menu: Popper was applying a bad translate3d X offset. data-display="static" on the toggle
+ * disables Popper applyStyle; we pin right edge to the toggle and use a fixed Y translate (~btn-sm height).
+ */
+#page-local-dixeo_editor-content .dixeo-editor-menu-grid .dixeo-editor-menu-dropdown-last .dropdown-menu {
+    top: 0 !important;
+    left: auto !important;
+    right: 0 !important;
+    bottom: auto !important;
+    transform: translate3d(0, 32px, 0) !important;
+}
+
+#page-local-dixeo_editor-content .dixeo-editor-menu-grid .dixeo-editor-menu-dropdown-last .dropdown-menu.show {
+    transform: translate3d(0, 32px, 0) !important;
 }
 
 #page-local-dixeo_editor-content .dropdown-menu {
@@ -348,7 +400,7 @@
     white-space: nowrap;
 }
 
-#page-local-dixeo_editor-content #dixeo_editor_panel.is-locked .dropdown-toggle,
+#page-local-dixeo_editor-content #dixeo_editor_panel.is-locked .dixeo-editor-menu-grid .dropdown-toggle,
 #page-local-dixeo_editor-content #dixeo_editor_panel.is-locked .ai-prompt-option,
 #page-local-dixeo_editor-content #dixeo_editor_panel.is-locked #instructions,
 #page-local-dixeo_editor-content #dixeo_editor_panel.is-locked #undo_button,
@@ -435,4 +487,182 @@ body#page-local-dixeo_editor-content.dixeo-editor-resizing-active #dixeo_editor_
     bottom: -6px;
     height: 12px;
     width: auto;
+}
+
+/* Docked layout (content.php) */
+body#page-local-dixeo_editor-content.dixeo-editor-layout-docked #page-wrapper #page.drawers {
+    max-width: 100%;
+}
+
+body#page-local-dixeo_editor-content.dixeo-editor-layout-docked #page-wrapper #page.drawers.show-drawer-left {
+    margin-left: 0 !important;
+}
+
+body#page-local-dixeo_editor-content.dixeo-editor-layout-docked #page.drawers .main-inner #region-main div[role="main"] {
+    padding: 0 !important;
+}
+
+body#page-local-dixeo_editor-content.dixeo-editor-layout-docked .dixeo-editor-dock-pane-editor #content_editor {
+    padding: 1rem;
+}
+
+/* Bottom dock: cap main column to viewport so editor+panel cannot extend below the fold */
+body#page-local-dixeo_editor-content.dixeo-editor-layout-dock-bottom #page.drawers .main-inner #region-main div[role="main"] {
+    max-height: 100vh;
+    margin: 0;
+    min-height: 0;
+    overflow: hidden;
+}
+
+body#page-local-dixeo_editor-content.dixeo-editor-layout-dock-bottom #dixeo_editor_layout_root.dixeo-editor-layout-mode-docked {
+    min-height: 0;
+    max-height: 100%;
+}
+
+/* Flex assigns height; JS enforces min panel px — drop floating min-height so the pane can match the split */
+body#page-local-dixeo_editor-content.dixeo-editor-layout-dock-bottom #dixeo_editor_panel {
+    min-height: 0 !important;
+    overflow: hidden;
+}
+
+body#page-local-dixeo_editor-content.dixeo-editor-layout-dock-bottom #dixeo_editor_panel .dixeo-editor-panel-body {
+    overflow-y: auto;
+}
+
+body#page-local-dixeo_editor-content.dixeo-editor-layout-docked #panel_close_button {
+    display: none !important;
+}
+
+body#page-local-dixeo_editor-content.dixeo-editor-layout-docked .dixeo-editor-resize-handle {
+    display: none !important;
+}
+
+body#page-local-dixeo_editor-content.dixeo-editor-layout-dock-left .main-inner,
+body#page-local-dixeo_editor-content.dixeo-editor-layout-dock-right .main-inner {
+    max-width: 100% !important;
+}
+
+#page-local-dixeo_editor-content .dixeo-editor-display-menu-dropdown {
+    min-width: 11rem;
+}
+
+#page-local-dixeo_editor-content .dixeo-display-mode-opt.active {
+    opacity: 1;
+    background-color: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+}
+
+/* Dock layout icons: same glyph, rotated to suggest panel edge */
+#page-local-dixeo_editor-content .dixeo-display-mode-dock-left i {
+    display: inline-block;
+    transform: rotate(-90deg);
+}
+
+#page-local-dixeo_editor-content .dixeo-display-mode-dock-bottom i {
+    display: inline-block;
+    transform: rotate(180deg);
+}
+
+#page-local-dixeo_editor-content .dixeo-display-mode-dock-right i {
+    display: inline-block;
+    transform: rotate(90deg);
+}
+
+#page-local-dixeo_editor-content #dixeo_editor_layout_root.dixeo-editor-layout-mode-docked {
+    display: flex;
+    flex: 1 1 0;
+    min-height: 0;
+    min-width: 0;
+    width: 100%;
+}
+
+#page-local-dixeo_editor-content .dixeo-editor-dock-row {
+    display: flex;
+    flex: 1 1 0;
+    min-height: 0;
+    min-width: 0;
+    width: 100%;
+}
+
+/* DOM order: editor section, splitter, panel host — reverse row for left dock */
+#page-local-dixeo_editor-content #dixeo_editor_layout_root.dixeo-editor-dock-row--left {
+    flex-direction: row-reverse;
+}
+
+#page-local-dixeo_editor-content #dixeo_editor_layout_root.dixeo-editor-dock-row--right {
+    flex-direction: row;
+}
+
+#page-local-dixeo_editor-content #dixeo_editor_layout_root.dixeo-editor-dock-row--bottom {
+    flex-direction: column;
+}
+
+#page-local-dixeo_editor-content .dixeo-editor-dock-pane-editor {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 0;
+}
+
+#page-local-dixeo_editor-content .dixeo-editor-dock-pane-panel {
+    display: flex;
+    flex-direction: column;
+    flex: 0 0 35%;
+    min-width: 370px;
+    min-height: 180px;
+    max-width: 75%;
+    overflow: hidden;
+}
+
+#page-local-dixeo_editor-content .dixeo-editor-dock-row--bottom .dixeo-editor-dock-pane-panel {
+    max-width: none;
+    /* Max fraction is enforced in JS (clampBottomDockRatio); avoid CSS % fighting the splitter */
+    max-height: none;
+    min-height: 0;
+}
+
+#page-local-dixeo_editor-content .dixeo-editor-dock-pane-editor #content_editor {
+    flex: 1 1 0;
+    min-height: 0;
+}
+
+body#page-local-dixeo_editor-content.dixeo-editor-layout-docked #dixeo_editor_panel {
+    position: relative !important;
+    right: auto !important;
+    bottom: auto !important;
+    left: auto !important;
+    top: auto !important;
+    width: 100% !important;
+    min-width: 370px;
+    height: 100% !important;
+    max-width: none !important;
+    max-height: none !important;
+    border-radius: 0.35rem;
+    box-shadow: none;
+}
+
+#page-local-dixeo_editor-content .dixeo-editor-dock-splitter--vertical {
+    flex: 0 0 8px;
+    cursor: col-resize;
+    background: #dee2e6;
+    touch-action: none;
+}
+
+#page-local-dixeo_editor-content .dixeo-editor-dock-splitter--horizontal {
+    flex: 0 0 8px;
+    cursor: row-resize;
+    background: #dee2e6;
+    touch-action: none;
+}
+
+body#page-local-dixeo_editor-content.dixeo-editor-splitting {
+    user-select: none;
+    cursor: inherit;
+}
+
+body#page-local-dixeo_editor-content.dixeo-editor-splitting iframe,
+body#page-local-dixeo_editor-content.dixeo-editor-splitting .tox-tinymce {
+    pointer-events: none;
 }

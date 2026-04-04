@@ -118,3 +118,19 @@ function local_dixeo_editor_add_button_to_activity_menu($page) {
 
     return $actions;
 }
+
+/**
+ * User preferences for AJAX / core_user repository (content editor layout).
+ *
+ * @return array
+ */
+function local_dixeo_editor_user_preferences(): array {
+    return [
+        'local_dixeo_editor_content_panel_state' => [
+            'type' => PARAM_TEXT,
+            'null' => NULL_ALLOWED,
+            'default' => '',
+            'permissioncallback' => [\core\user::class, 'is_current_user'],
+        ],
+    ];
+}

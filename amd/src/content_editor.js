@@ -3,8 +3,9 @@ define([
     'core/templates',
     'core/notification',
     'core/str',
-    'local_dixeo_editor/content_editor_ai_panel'
-], function(Ajax, Templates, Notification, Str, ContentEditorAIPanel) {
+    'local_dixeo_editor/content_editor_ai_panel',
+    'local_dixeo_editor/content_editor_layout'
+], function(Ajax, Templates, Notification, Str, ContentEditorAIPanel, LayoutModule) {
     'use strict';
 
     var SELECTORS = {
@@ -38,9 +39,12 @@ define([
         editorRedoButton: null,
         undoRedoSyncTimer: null,
         strings: {},
+        layoutInitialJson: '',
+        layoutRef: null,
 
-        init: function(cmid) {
+        init: function(cmid, layoutJson) {
             this.cmid = cmid;
+            this.layoutInitialJson = typeof layoutJson === 'string' ? layoutJson : '';
             this.cacheDom();
             this.loadStrings().then(function(strings) {
                 Editor.strings = strings;
@@ -95,6 +99,7 @@ define([
         },
 
         setupUi: function() {
+            var self = this;
             this.panel = new ContentEditorAIPanel({
                 fab: this.dom.fab,
                 panel: this.dom.panel,
@@ -104,11 +109,23 @@ define([
                 generateLogo: this.dom.generateLogo,
                 generateSpinner: this.dom.generateSpinner,
                 generateLabel: this.dom.generateLabel,
-                panelCancelGenerationButton: this.dom.panelCancelGenerationButton
+                panelCancelGenerationButton: this.dom.panelCancelGenerationButton,
+                onFloatGeometryChange: function() {
+                    if (self.layoutRef) {
+                        self.layoutRef.onFloatGeometryChange();
+                    }
+                },
+                onPanelOpen: function() {
+                    if (self.layoutRef && typeof self.layoutRef.clampFloatPanelToViewport === 'function') {
+                        self.layoutRef.clampFloatPanelToViewport();
+                    }
+                }
             });
             this.panel.init();
             this.panel.setGenerateVisualState(false, this.strings.generate, this.strings.generating);
             this.setPanelActionButtonsMode(false);
+
+            this.layoutRef = LayoutModule.create(this);
 
             this.bindPromptMenus();
             this.bindActionButtons();
@@ -155,6 +172,9 @@ define([
             });
 
             this.dom.panelCloseButton.addEventListener('click', function() {
+                if (self.layoutRef && self.layoutRef.isDocked()) {
+                    return;
+                }
                 self.panel.close();
             });
 
@@ -529,8 +549,8 @@ define([
     };
 
     return {
-        init: function(cmid) {
-            Editor.init(cmid);
+        init: function(cmid, layoutJson) {
+            Editor.init(cmid, layoutJson);
         }
     };
 });

@@ -9,6 +9,7 @@ define([], function() {
      */
     function ContentEditorAIPanel(dom) {
         this.dom = dom;
+        this.layoutDocked = false;
         this.isOpen = false;
         this.isLocked = false;
         this.isDragging = false;
@@ -22,7 +23,7 @@ define([], function() {
         this.activeResizeHandle = null;
         this.activeResizePointerId = null;
         this.minWidth = 360;
-        this.minHeight = 320;
+        this.minHeight = 270;
     }
 
     ContentEditorAIPanel.prototype.init = function() {
@@ -48,8 +49,25 @@ define([], function() {
             if (self.isLocked) {
                 return;
             }
+            if (self.layoutDocked) {
+                return;
+            }
             self.close();
         });
+    };
+
+    /**
+     * @param {boolean} docked
+     */
+    ContentEditorAIPanel.prototype.setLayoutDocked = function(docked) {
+        this.layoutDocked = Boolean(docked);
+    };
+
+    ContentEditorAIPanel.prototype.notifyFloatGeometryChange = function() {
+        if (this.layoutDocked || typeof this.dom.onFloatGeometryChange !== 'function') {
+            return;
+        }
+        this.dom.onFloatGeometryChange();
     };
 
     /**
@@ -65,6 +83,9 @@ define([], function() {
         header.addEventListener('mousedown', function(event) {
             // Ignore drag start from interactive controls.
             if (event.target.closest('button, a, input, textarea, select')) {
+                return;
+            }
+            if (self.layoutDocked) {
                 return;
             }
             if (self.isLocked) {
@@ -106,6 +127,7 @@ define([], function() {
             self.isDragging = false;
             document.body.classList.remove('dixeo-editor-dragging');
             self.dom.panel.classList.remove('dixeo-editor-panel-dragging');
+            self.notifyFloatGeometryChange();
         });
     };
 
@@ -132,6 +154,9 @@ define([], function() {
             self.dom.panel.appendChild(handle);
 
             handle.addEventListener('pointerdown', function(event) {
+                if (self.layoutDocked) {
+                    return;
+                }
                 if (self.isLocked) {
                     return;
                 }
@@ -213,6 +238,7 @@ define([], function() {
             }
             self.activeResizeHandle = null;
             self.activeResizePointerId = null;
+            self.notifyFloatGeometryChange();
         };
 
         window.addEventListener('mouseup', endResize);
@@ -266,9 +292,18 @@ define([], function() {
         this.dom.panel.classList.remove('d-none');
         this.dom.panel.setAttribute('aria-hidden', 'false');
         this.dom.fab.setAttribute('aria-expanded', 'true');
+        if (typeof this.dom.onPanelOpen === 'function') {
+            var self = this;
+            window.requestAnimationFrame(function() {
+                self.dom.onPanelOpen();
+            });
+        }
     };
 
     ContentEditorAIPanel.prototype.close = function() {
+        if (this.layoutDocked) {
+            return;
+        }
         this.isOpen = false;
         this.dom.panel.classList.add('d-none');
         this.dom.backdrop.classList.add('d-none');
@@ -320,6 +355,9 @@ define([], function() {
     ContentEditorAIPanel.prototype.setPanelControlsEnabled = function(enabled) {
         var controls = this.dom.panel.querySelectorAll('button, textarea');
         controls.forEach(function(control) {
+            if (control.closest('.dixeo-editor-display-menu')) {
+                return;
+            }
             control.disabled = !enabled;
         });
 

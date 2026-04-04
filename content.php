@@ -88,6 +88,11 @@ echo $OUTPUT->render_from_template('local_dixeo_editor/content_editor', [
     'cancelurl' => $activityadapter->get_redirect_url($course->id, $cmid),
 ]);
 
-$PAGE->requires->js_call_amd('local_dixeo_editor/content_editor', 'init', [$cmid]);
+$savedlayout = '';
+if (isloggedin() && !isguestuser()) {
+    $savedlayout = (string) get_user_preferences('local_dixeo_editor_content_panel_state', '');
+}
+
+$PAGE->requires->js_call_amd('local_dixeo_editor/content_editor', 'init', [$cmid, $savedlayout]);
 
 echo $OUTPUT->footer();

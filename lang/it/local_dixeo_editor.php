@@ -83,4 +83,10 @@ $string['prompt_tools_translate'] = 'Traduci il contenuto in LINGUA preservando 
 $string['prompt_tools_grammar'] = 'Rivedi e correggi grammatica, ortografia, punteggiatura e sintassi preservando significato e tono originali. Migliora chiarezza e leggibilità senza alterare il contenuto educativo previsto.';
 $string['cancelmodeconfirm'] = 'Sei sicuro di voler uscire dalla modalità di modifica? Tutte le modifiche andranno perse.';
 $string['unexpectederror'] = 'Si è verificato un errore imprevisto. Riprova.';
+$string['displaymode'] = 'Modalità di visualizzazione';
+$string['displaymode_float'] = 'Finestra mobile';
+$string['displaymode_dockleft'] = 'Aggancia a sinistra';
+$string['displaymode_dockbottom'] = 'Aggancia in basso';
+$string['displaymode_dockright'] = 'Aggancia a destra';
+$string['displaymode_menu'] = 'Opzioni di visualizzazione del pannello';
 
