@@ -29,8 +29,10 @@ use core_external\external_api;
 use core_external\external_function_parameters;
 use core_external\external_single_structure;
 use core_external\external_value;
+use invalid_parameter_exception;
 use local_dixeo\context\context_builder_factory;
 use local_dixeo\external\service_factory;
+use local_dixeo\service\tiny_autosave_draft_service;
 
 class start_regenerate_module_content extends external_api {
     /**
@@ -40,18 +42,50 @@ class start_regenerate_module_content extends external_api {
         return new external_function_parameters([
             'cmid' => new external_value(PARAM_INT, 'Course module ID'),
             'instructions' => new external_value(PARAM_TEXT, 'AI instructions'),
+            'autosave_contextid' => new external_value(
+                PARAM_INT,
+                'Tiny autosave context id (0 = do not read tiny_autosave)',
+                VALUE_DEFAULT,
+                0
+            ),
+            'autosave_pagehash' => new external_value(
+                PARAM_RAW,
+                'Tiny autosave page hash',
+                VALUE_DEFAULT,
+                ''
+            ),
+            'autosave_elementid' => new external_value(
+                PARAM_RAW,
+                'Tiny autosave target element id',
+                VALUE_DEFAULT,
+                ''
+            ),
         ]);
     }
 
     /**
      * @param int $cmid
      * @param string $instructions
+     * @param int $autosave_contextid
+     * @param string $autosave_pagehash
+     * @param string $autosave_elementid
      * @return array
      */
-    public static function execute(int $cmid, string $instructions): array {
+    public static function execute(
+        int $cmid,
+        string $instructions,
+        int $autosave_contextid = 0,
+        string $autosave_pagehash = '',
+        string $autosave_elementid = ''
+    ): array {
+        global $CFG, $USER;
+
         $params = self::validate_parameters(self::execute_parameters(), [
             'cmid' => $cmid,
             'instructions' => $instructions,
+            'autosave_contextid' => $autosave_contextid,
+            'autosave_pagehash' => $autosave_pagehash,
+            'autosave_elementid' => $autosave_elementid,
         ]);
 
         $cm = get_coursemodule_from_id('', $params['cmid'], 0, false, MUST_EXIST);
@@ -60,13 +94,21 @@ class start_regenerate_module_content extends external_api {
         require_capability('moodle/course:manageactivities', $context);
 
         try {
-            global $CFG;
             require_once($CFG->dirroot . '/local/dixeo/lib.php');
+
+            $draftHtml = self::resolve_autosave_draft_html(
+                $cm,
+                $context,
+                (int) $params['autosave_contextid'],
+                (string) $params['autosave_pagehash'],
+                (string) $params['autosave_elementid'],
+                (int) $USER->id
+            );
 
             $payload = [
                 'moduleType' => $cm->modname,
                 'instructions' => $params['instructions'],
-                'context' => context_builder_factory::buildModuleEditContext($params['cmid']),
+                'context' => context_builder_factory::buildModuleEditContext($params['cmid'], $draftHtml),
                 'courseId' => (string) $cm->course,
             ];
 
@@ -91,6 +133,54 @@ class start_regenerate_module_content extends external_api {
                 'error' => ['message' => $e->getMessage()],
             ];
         }
+    }
+
+    /**
+     * Resolve draft HTML from tiny_autosave or null for DB-only fallback.
+     *
+     * @param \stdClass $cm Course module record from get_coursemodule_from_id.
+     * @param \context_module $modulecontext Module context.
+     * @param int $autosavecontextid 0 = skip.
+     * @param string $autosavepagehash
+     * @param string $autosaveelementid
+     * @param int $userid
+     * @return string|null
+     */
+    private static function resolve_autosave_draft_html(
+        \stdClass $cm,
+        \context_module $modulecontext,
+        int $autosavecontextid,
+        string $autosavepagehash,
+        string $autosaveelementid,
+        int $userid
+    ): ?string {
+        if ($autosavecontextid <= 0) {
+            return null;
+        }
+
+        if ((int) $autosavecontextid !== (int) $modulecontext->id) {
+            throw new invalid_parameter_exception('autosave_contextid does not match this activity');
+        }
+
+        $pagehash = trim($autosavepagehash);
+        $elementid = trim($autosaveelementid);
+        if ($pagehash === '' || $elementid === '') {
+            throw new invalid_parameter_exception(
+                'autosave_pagehash and autosave_elementid are required when autosave_contextid is set'
+            );
+        }
+
+        if (strlen($pagehash) > 64 || !ctype_xdigit($pagehash)) {
+            throw new invalid_parameter_exception('Invalid autosave_pagehash');
+        }
+
+        if (strlen($elementid) > 255 || !preg_match('/^id_[a-zA-Z0-9_-]+$/', $elementid)) {
+            throw new invalid_parameter_exception('Invalid autosave_elementid');
+        }
+
+        $service = new tiny_autosave_draft_service();
+
+        return $service->get_draft_text($userid, (int) $modulecontext->id, $pagehash, $elementid);
     }
 
     /**

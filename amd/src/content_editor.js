@@ -4,8 +4,10 @@ define([
     'core/notification',
     'core/str',
     'local_dixeo_editor/content_editor_ai_panel',
-    'local_dixeo_editor/content_editor_layout'
-], function(Ajax, Templates, Notification, Str, ContentEditorAIPanel, LayoutModule) {
+    'local_dixeo_editor/content_editor_layout',
+    'tiny_autosave/repository',
+    'tiny_autosave/options'
+], function(Ajax, Templates, Notification, Str, ContentEditorAIPanel, LayoutModule, AutosaveRepository, AutosaveOptions) {
     'use strict';
 
     var SELECTORS = {
@@ -342,6 +344,19 @@ define([
             this.setEditorEnabled(!isLocked);
         },
 
+        /**
+         * TinyMCE editor for the module content field, if available.
+         *
+         * @returns {Object|null}
+         */
+        getModuleContentEditor: function() {
+            var textarea = document.getElementById(SELECTORS.editorTextarea);
+            if (!textarea || !window.tinymce) {
+                return null;
+            }
+            return window.tinymce.get(textarea.id) || null;
+        },
+
         setEditorEnabled: function(enabled) {
             var textarea = document.getElementById(SELECTORS.editorTextarea);
             var iframe = document.querySelector(SELECTORS.editorIframe);
@@ -391,14 +406,46 @@ define([
             this.setPanelActionButtonsMode(true);
             this.setWholeUiLocked(true);
 
-            Ajax.call([{
-                methodname: 'local_dixeo_editor_start_regenerate_module_content',
-                args: {
-                    cmid: this.cmid,
-                    instructions: instructions
-                }
-            }])[0].then(function(response) {
+            var editor = this.getModuleContentEditor();
+            if (editor && typeof editor.save === 'function') {
+                editor.save();
+            }
+
+            var flushPromise = Promise.resolve(null);
+            if (editor && typeof AutosaveRepository.updateAutosaveSession === 'function') {
+                flushPromise = AutosaveRepository.updateAutosaveSession(editor).then(function() {
+                    return {
+                        autosave_contextid: AutosaveOptions.getContextId(editor),
+                        autosave_pagehash: AutosaveOptions.getPageHash(editor),
+                        autosave_elementid: editor.targetElm.id
+                    };
+                }).catch(function() {
+                    return null;
+                });
+            }
+
+            flushPromise.then(function(autosaveKeys) {
                 if (token !== self.generationToken) {
+                    return null;
+                }
+                var args = {
+                    cmid: self.cmid,
+                    instructions: instructions
+                };
+                if (autosaveKeys &&
+                    autosaveKeys.autosave_contextid &&
+                    autosaveKeys.autosave_pagehash &&
+                    autosaveKeys.autosave_elementid) {
+                    args.autosave_contextid = autosaveKeys.autosave_contextid;
+                    args.autosave_pagehash = autosaveKeys.autosave_pagehash;
+                    args.autosave_elementid = autosaveKeys.autosave_elementid;
+                }
+                return Ajax.call([{
+                    methodname: 'local_dixeo_editor_start_regenerate_module_content',
+                    args: args
+                }])[0];
+            }).then(function(response) {
+                if (token !== self.generationToken || response === null) {
                     return;
                 }
                 if (!response.success || !response.data || !response.data.jobid) {
@@ -411,6 +458,9 @@ define([
                 self.activeJobId = response.data.jobid;
                 self.pollJob(token);
             }).catch(function(error) {
+                if (token !== self.generationToken) {
+                    return;
+                }
                 self.unlockAfterGeneration();
                 Notification.exception(error);
             });
