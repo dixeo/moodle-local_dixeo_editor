@@ -204,7 +204,11 @@ body#page-local-dixeo_editor-content:not(.dixeo-editor-layout-docked) #page-wrap
     min-height: 0;
 }
 
-/* Float: panel stays in zero-size host so fixed positioning works (ancestor not display:none) */
+/*
+ * Float: panel stays in zero-size host so fixed positioning works (ancestor not display:none).
+ * z-index must be above #dixeo_editor_panel_backdrop (1050); otherwise the host's stacking context
+ * stays at 2 and the locked backdrop covers the panel (Cancel generation unusable).
+ */
 #page-local-dixeo_editor-content #dixeo_editor_layout_root.dixeo-editor-layout-mode-float #dixeo_editor_dock_panel_host {
     position: absolute;
     left: 0;
@@ -212,7 +216,7 @@ body#page-local-dixeo_editor-content:not(.dixeo-editor-layout-docked) #page-wrap
     width: 0;
     height: 0;
     overflow: visible;
-    z-index: 2;
+    z-index: 1062;
     pointer-events: none;
 }
 
