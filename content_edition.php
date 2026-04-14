@@ -31,8 +31,8 @@ require_once($CFG->dirroot.'/mod/page/locallib.php');
 
 // Get the course module id from parameters.
 $cmid = required_param('cmid', PARAM_INT);
-// Optional slide id for composite modules (slideshow edits one slide at a time).
-$slideid = optional_param('slideid', 0, PARAM_INT);
+// Optional child record id for composite modules (e.g. slideshow → slide id).
+$subid = optional_param('slideid', 0, PARAM_INT) ?: null;
 
 // Retrieve the course module record using Moodle API.
 $cm = get_coursemodule_from_id('', $cmid);
@@ -42,10 +42,7 @@ require_capability('moodle/course:manageactivities', $context);
 
 $course = $DB->get_record('course', ['id' => $cm->course], '*', MUST_EXIST);
 $PAGE->set_cm($cm, $course);
-$urlparams = ['cmid' => $cmid];
-if ($slideid > 0) {
-    $urlparams['slideid'] = $slideid;
-}
+$urlparams = ['cmid' => $cmid] + ($subid !== null ? ['slideid' => $subid] : []);
 $PAGE->set_url('/local/dixeo_editor/content_edition.php', $urlparams);
 $PAGE->set_context($context);
 $PAGE->set_title($cm->name);
@@ -53,7 +50,7 @@ $PAGE->add_body_class('limitedwidth');
 
 // Instantiate the appropriate activity adapter.
 $factory = new \local_dixeo_editor\activity\activity_adapter_factory($DB);
-$activityadapter = $factory->create($cmid, $slideid > 0 ? $slideid : null);
+$activityadapter = $factory->create($cmid, $subid);
 
 // Get editor options
 $editoroptions = page_get_editor_options($context);
@@ -108,6 +105,6 @@ echo $OUTPUT->render_from_template('local_dixeo_editor/mod_content_editor', [
     'cancelurl' => $activityadapter->get_redirect_url($course->id, $cmid),
 ]);
 
-$PAGE->requires->js_call_amd('local_dixeo_editor/mod_editor_form', 'init', [$cmid, $slideid > 0 ? $slideid : null]);
+$PAGE->requires->js_call_amd('local_dixeo_editor/mod_editor_form', 'init', [$cmid, $subid]);
 
 echo $OUTPUT->footer();

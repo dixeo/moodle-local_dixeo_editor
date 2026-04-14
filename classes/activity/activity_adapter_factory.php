@@ -26,11 +26,11 @@
 
 namespace local_dixeo_editor\activity;
 
-use moodle_database;
 use context_module;
+use moodle_database;
 
 class activity_adapter_factory {
-    /** @var array<string, class-string> Registered adapter classes by module name. */
+    /** @var array<string, class-string<base_activity_adapter>> Registered adapter classes by module name. */
     private static array $adapters = [
         'page' => page_activity_adapter::class,
         'label' => label_activity_adapter::class,
@@ -39,9 +39,6 @@ class activity_adapter_factory {
 
     private moodle_database $db;
 
-    /**
-     * Constructor requires a DB instance (injected).
-     */
     public function __construct(moodle_database $db) {
         $this->db = $db;
     }
@@ -49,56 +46,47 @@ class activity_adapter_factory {
     /**
      * Register an adapter class for a module type.
      *
-     * Allows external plugins to extend the factory with new adapters.
-     *
      * @param string $modname The module name.
-     * @param string $classname The fully qualified adapter class name.
+     * @param class-string<base_activity_adapter> $classname
      */
     public static function register_adapter(string $modname, string $classname): void {
         self::$adapters[$modname] = $classname;
     }
 
     /**
-     * Get supported module types.
-     *
-     * @return array List of supported module names.
+     * @return array<int, string> List of supported module names.
      */
     public static function get_supported_types(): array {
         return array_keys(self::$adapters);
     }
 
     /**
-     * Create the appropriate adapter object based on cmid.
+     * Create the appropriate adapter based on cmid.
      *
-     * For composite modules that target a sub-record (e.g. slideshow → one
-     * slide row), pass $slideid to identify the specific child being edited.
+     * For composite modules that target a sub-record (slideshow slide, future
+     * quiz question, etc.), pass $subid to identify the child row. Each
+     * adapter class decides how to resolve its record id from (cm, subid)
+     * via its static resolve_record_id() method — so this factory stays
+     * generic (no modname branching).
      *
      * @param int $cmid Course module ID.
-     * @param int|null $slideid Optional child record ID (required for slideshow).
+     * @param int|null $subid Optional child record ID for composite modules.
      * @return activity_adapter_interface
      *
-     * @throws \coding_exception if module type is unsupported or slideid is missing when required.
+     * @throws \coding_exception if the module type is unsupported or the
+     *         adapter rejects the given subid.
      */
-    public function create(int $cmid, ?int $slideid = null): activity_adapter_interface {
+    public function create(int $cmid, ?int $subid = null): activity_adapter_interface {
         $cm = get_coursemodule_from_id('', $cmid, 0, false, MUST_EXIST);
-        $modname = $cm->modname;
         $context = context_module::instance($cm->id);
 
-        if (!isset(self::$adapters[$modname])) {
-            throw new \coding_exception("Unsupported module type: {$modname}");
+        $classname = self::$adapters[$cm->modname] ?? null;
+        if ($classname === null) {
+            throw new \coding_exception("Unsupported module type: {$cm->modname}");
         }
 
-        if ($modname === 'slideshow') {
-            if ($slideid === null) {
-                throw new \coding_exception('slideid is required for slideshow adapter');
-            }
-            $instanceid = $slideid;
-        } else {
-            $instanceid = (int) $cm->instance;
-        }
+        $recordid = $classname::resolve_record_id($cm, $subid);
 
-        $classname = self::$adapters[$modname];
-        return new $classname($instanceid, $context, $this->db);
+        return new $classname($recordid, $context, $this->db);
     }
 }
-

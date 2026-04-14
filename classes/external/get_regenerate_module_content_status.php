@@ -83,10 +83,8 @@ class get_regenerate_module_content_status extends external_api {
 
             if ($status === 'completed') {
                 $slideidparam = (int) $params['slideid'];
-                $adapter = (new activity_adapter_factory($DB))->create(
-                    $params['cmid'],
-                    $slideidparam > 0 ? $slideidparam : null
-                );
+                $subid = $slideidparam > 0 ? $slideidparam : null;
+                $adapter = (new activity_adapter_factory($DB))->create($params['cmid'], $subid);
                 $contentfield = $adapter->get_content_field();
                 $resultdata = $statusdto->result['data'] ?? [];
                 $data['content'] = $resultdata[$contentfield] ?? ($resultdata['content'] ?? '');

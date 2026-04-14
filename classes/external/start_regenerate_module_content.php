@@ -105,31 +105,24 @@ class start_regenerate_module_content extends external_api {
             require_once($CFG->dirroot . '/local/dixeo/lib.php');
 
             $slideidparam = (int) $params['slideid'];
+            $subid = $slideidparam > 0 ? $slideidparam : null;
 
-            if ($cm->modname === 'slideshow') {
-                if ($slideidparam <= 0) {
-                    throw new invalid_parameter_exception('slideid is required for slideshow editing');
-                }
-                $contextmd = context_builder_factory::build_slide_edit_context(
-                    $params['cmid'],
-                    $slideidparam
-                );
-            } else {
-                $drafthtml = self::resolve_autosave_draft_html(
+            // Autosave draft is only meaningful for simple (single-editor) modules.
+            $drafthtml = $subid === null
+                ? self::resolve_autosave_draft_html(
                     $cm,
                     $context,
                     (int) $params['autosave_contextid'],
                     (string) $params['autosave_pagehash'],
                     (string) $params['autosave_elementid'],
                     (int) $USER->id
-                );
-                $contextmd = context_builder_factory::buildModuleEditContext($params['cmid'], $drafthtml);
-            }
+                )
+                : null;
 
             $payload = [
                 'moduleType' => $cm->modname,
                 'instructions' => $params['instructions'],
-                'context' => $contextmd,
+                'context' => context_builder_factory::build_edit_context($params['cmid'], $subid, $drafthtml),
                 'courseId' => (string) $cm->course,
             ];
 

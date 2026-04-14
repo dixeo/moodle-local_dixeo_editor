@@ -89,27 +89,15 @@ class regenerate_module_content extends external_api {
         }
 
         $slideidparam = (int) $params['slideid'];
+        $subid = $slideidparam > 0 ? $slideidparam : null;
 
-        if ($cm->modname === 'slideshow' && $slideidparam <= 0) {
-            return [
-                'success' => false,
-                'error' => ['message' => 'slideid is required for slideshow editing.'],
-            ];
-        }
-
-        // Call the Dixeo service to edit the module.
+        // Single unified call — the service and adapter factory handle
+        // composite modules (slideshow) via their own internal dispatch.
         $service = new module_generation_service();
-        if ($cm->modname === 'slideshow') {
-            $result = $service->edit_slide($params['cmid'], $slideidparam, $params['instructions']);
-        } else {
-            $result = $service->edit_module($params['cmid'], $params['instructions']);
-        }
+        $result = $service->edit($params['cmid'], $subid, $params['instructions']);
 
         if ($result->is_success()) {
-            $adapter = (new activity_adapter_factory($DB))->create(
-                $params['cmid'],
-                $slideidparam > 0 ? $slideidparam : null
-            );
+            $adapter = (new activity_adapter_factory($DB))->create($params['cmid'], $subid);
             $contentfield = $adapter->get_content_field();
             $content = $result->result !== null
                 ? ($result->result['data'][$contentfield] ?? '')

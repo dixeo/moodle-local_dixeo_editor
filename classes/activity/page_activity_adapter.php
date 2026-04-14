@@ -11,8 +11,13 @@
 namespace local_dixeo_editor\activity;
 
 use moodle_url;
+use stdClass;
 
 class page_activity_adapter extends base_activity_adapter {
+
+    public static function resolve_record_id(stdClass $cm, ?int $subid): int {
+        return (int) $cm->instance;
+    }
 
     protected function get_module_name(): string {
         return 'page';
