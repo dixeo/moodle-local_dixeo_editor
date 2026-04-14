@@ -40,20 +40,28 @@ class get_regenerate_module_content_status extends external_api {
         return new external_function_parameters([
             'cmid' => new external_value(PARAM_INT, 'Course module ID'),
             'jobid' => new external_value(PARAM_RAW, 'Job id'),
+            'slideid' => new external_value(
+                PARAM_INT,
+                'Slide row ID (required for slideshow, 0 otherwise)',
+                VALUE_DEFAULT,
+                0
+            ),
         ]);
     }
 
     /**
      * @param int $cmid
      * @param string $jobid
+     * @param int $slideid
      * @return array
      */
-    public static function execute(int $cmid, string $jobid): array {
+    public static function execute(int $cmid, string $jobid, int $slideid = 0): array {
         global $DB;
 
         $params = self::validate_parameters(self::execute_parameters(), [
             'cmid' => $cmid,
             'jobid' => $jobid,
+            'slideid' => $slideid,
         ]);
 
         $cm = get_coursemodule_from_id('', $params['cmid'], 0, false, MUST_EXIST);
@@ -74,7 +82,11 @@ class get_regenerate_module_content_status extends external_api {
             ];
 
             if ($status === 'completed') {
-                $adapter = (new activity_adapter_factory($DB))->create($params['cmid']);
+                $slideidparam = (int) $params['slideid'];
+                $adapter = (new activity_adapter_factory($DB))->create(
+                    $params['cmid'],
+                    $slideidparam > 0 ? $slideidparam : null
+                );
                 $contentfield = $adapter->get_content_field();
                 $resultdata = $statusdto->result['data'] ?? [];
                 $data['content'] = $resultdata[$contentfield] ?? ($resultdata['content'] ?? '');

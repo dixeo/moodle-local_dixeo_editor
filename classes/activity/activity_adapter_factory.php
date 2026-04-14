@@ -34,6 +34,7 @@ class activity_adapter_factory {
     private static array $adapters = [
         'page' => page_activity_adapter::class,
         'label' => label_activity_adapter::class,
+        'slideshow' => slideshow_slide_activity_adapter::class,
     ];
 
     private moodle_database $db;
@@ -69,19 +70,31 @@ class activity_adapter_factory {
     /**
      * Create the appropriate adapter object based on cmid.
      *
+     * For composite modules that target a sub-record (e.g. slideshow → one
+     * slide row), pass $slideid to identify the specific child being edited.
+     *
      * @param int $cmid Course module ID.
+     * @param int|null $slideid Optional child record ID (required for slideshow).
      * @return activity_adapter_interface
      *
-     * @throws \coding_exception if module type is unsupported.
+     * @throws \coding_exception if module type is unsupported or slideid is missing when required.
      */
-    public function create(int $cmid): activity_adapter_interface {
+    public function create(int $cmid, ?int $slideid = null): activity_adapter_interface {
         $cm = get_coursemodule_from_id('', $cmid, 0, false, MUST_EXIST);
         $modname = $cm->modname;
-        $instanceid = $cm->instance;
         $context = context_module::instance($cm->id);
 
         if (!isset(self::$adapters[$modname])) {
             throw new \coding_exception("Unsupported module type: {$modname}");
+        }
+
+        if ($modname === 'slideshow') {
+            if ($slideid === null) {
+                throw new \coding_exception('slideid is required for slideshow adapter');
+            }
+            $instanceid = $slideid;
+        } else {
+            $instanceid = (int) $cm->instance;
         }
 
         $classname = self::$adapters[$modname];

@@ -72,11 +72,11 @@ define(['jquery', 'core/templates', 'core/notification', 'core/ajax'], function(
     }
 
     return {
-        init: function(cmid) {
+        init: function(cmid, slideid) {
             waitForEditorIframe()
                 .then((iframeDoc) => {
                     this.editorDocument = iframeDoc;
-                    this.setupEventListeners(cmid);
+                    this.setupEventListeners(cmid, slideid);
                 })
                 .catch(Notification.exception);
         },
@@ -84,8 +84,9 @@ define(['jquery', 'core/templates', 'core/notification', 'core/ajax'], function(
         /**
          * Sets up all necessary event listeners after the editor iframe is ready.
          * @param {number} cmid - The ID of the module being edited.
+         * @param {number|null} slideid - Slide row ID (slideshow only), null otherwise.
          */
-        setupEventListeners: function(cmid) {
+        setupEventListeners: function(cmid, slideid) {
             // Resolve DOM elements now that the template is on the page.
             const generateButton = document.getElementById(SELECTORS.GENERATE_BUTTON);
             const applyButton = document.getElementById('apply_button');
@@ -159,7 +160,8 @@ define(['jquery', 'core/templates', 'core/notification', 'core/ajax'], function(
                     methodname: 'local_dixeo_editor_regenerate_module_content',
                     args: {
                         cmid: cmid,
-                        instructions: instructions
+                        instructions: instructions,
+                        slideid: slideid || 0
                     }
                 }])[0]
                 .then((response) => {

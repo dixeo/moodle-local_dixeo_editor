@@ -42,6 +42,12 @@ class start_regenerate_module_content extends external_api {
         return new external_function_parameters([
             'cmid' => new external_value(PARAM_INT, 'Course module ID'),
             'instructions' => new external_value(PARAM_TEXT, 'AI instructions'),
+            'slideid' => new external_value(
+                PARAM_INT,
+                'Slide row ID (required for slideshow, 0 otherwise)',
+                VALUE_DEFAULT,
+                0
+            ),
             'autosave_contextid' => new external_value(
                 PARAM_INT,
                 'Tiny autosave context id (0 = do not read tiny_autosave)',
@@ -74,6 +80,7 @@ class start_regenerate_module_content extends external_api {
     public static function execute(
         int $cmid,
         string $instructions,
+        int $slideid = 0,
         int $autosave_contextid = 0,
         string $autosave_pagehash = '',
         string $autosave_elementid = ''
@@ -83,6 +90,7 @@ class start_regenerate_module_content extends external_api {
         $params = self::validate_parameters(self::execute_parameters(), [
             'cmid' => $cmid,
             'instructions' => $instructions,
+            'slideid' => $slideid,
             'autosave_contextid' => $autosave_contextid,
             'autosave_pagehash' => $autosave_pagehash,
             'autosave_elementid' => $autosave_elementid,
@@ -96,19 +104,32 @@ class start_regenerate_module_content extends external_api {
         try {
             require_once($CFG->dirroot . '/local/dixeo/lib.php');
 
-            $draftHtml = self::resolve_autosave_draft_html(
-                $cm,
-                $context,
-                (int) $params['autosave_contextid'],
-                (string) $params['autosave_pagehash'],
-                (string) $params['autosave_elementid'],
-                (int) $USER->id
-            );
+            $slideidparam = (int) $params['slideid'];
+
+            if ($cm->modname === 'slideshow') {
+                if ($slideidparam <= 0) {
+                    throw new invalid_parameter_exception('slideid is required for slideshow editing');
+                }
+                $contextmd = context_builder_factory::build_slide_edit_context(
+                    $params['cmid'],
+                    $slideidparam
+                );
+            } else {
+                $drafthtml = self::resolve_autosave_draft_html(
+                    $cm,
+                    $context,
+                    (int) $params['autosave_contextid'],
+                    (string) $params['autosave_pagehash'],
+                    (string) $params['autosave_elementid'],
+                    (int) $USER->id
+                );
+                $contextmd = context_builder_factory::buildModuleEditContext($params['cmid'], $drafthtml);
+            }
 
             $payload = [
                 'moduleType' => $cm->modname,
                 'instructions' => $params['instructions'],
-                'context' => context_builder_factory::buildModuleEditContext($params['cmid'], $draftHtml),
+                'context' => $contextmd,
                 'courseId' => (string) $cm->course,
             ];
 

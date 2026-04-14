@@ -29,19 +29,24 @@ require_once($CFG->libdir . '/filelib.php');
 require_once($CFG->dirroot . '/mod/page/locallib.php');
 
 $cmid = required_param('cmid', PARAM_INT);
+$slideid = optional_param('slideid', 0, PARAM_INT);
 $cm = get_coursemodule_from_id('', $cmid);
 $context = context_module::instance($cm->id);
 require_capability('moodle/course:manageactivities', $context);
 
 $course = $DB->get_record('course', ['id' => $cm->course], '*', MUST_EXIST);
 $PAGE->set_cm($cm, $course);
-$PAGE->set_url('/local/dixeo_editor/content.php', ['cmid' => $cmid]);
+$urlparams = ['cmid' => $cmid];
+if ($slideid > 0) {
+    $urlparams['slideid'] = $slideid;
+}
+$PAGE->set_url('/local/dixeo_editor/content.php', $urlparams);
 $PAGE->set_context($context);
 $PAGE->set_title($cm->name);
 $PAGE->add_body_class('limitedwidth');
 
 $factory = new \local_dixeo_editor\activity\activity_adapter_factory($DB);
-$activityadapter = $factory->create($cmid);
+$activityadapter = $factory->create($cmid, $slideid > 0 ? $slideid : null);
 
 $editoroptions = page_get_editor_options($context);
 $fieldname = 'modulecontent';
@@ -93,6 +98,10 @@ if (isloggedin() && !isguestuser()) {
     $savedlayout = (string) get_user_preferences('local_dixeo_editor_content_panel_state', '');
 }
 
-$PAGE->requires->js_call_amd('local_dixeo_editor/content_editor', 'init', [$cmid, $savedlayout]);
+$PAGE->requires->js_call_amd('local_dixeo_editor/content_editor', 'init', [
+    $cmid,
+    $savedlayout,
+    $slideid > 0 ? $slideid : null,
+]);
 
 echo $OUTPUT->footer();

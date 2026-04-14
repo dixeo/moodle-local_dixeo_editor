@@ -47,6 +47,12 @@ class regenerate_module_content extends external_api {
         return new external_function_parameters([
             'cmid' => new external_value(PARAM_INT, 'Course module ID'),
             'instructions' => new external_value(PARAM_TEXT, 'AI instructions for content regeneration'),
+            'slideid' => new external_value(
+                PARAM_INT,
+                'Slide row ID (required for slideshow, 0 otherwise)',
+                VALUE_DEFAULT,
+                0
+            ),
         ]);
     }
 
@@ -55,15 +61,17 @@ class regenerate_module_content extends external_api {
      *
      * @param int $cmid Course module ID.
      * @param string $instructions AI instructions.
+     * @param int $slideid Slide row ID (slideshow only).
      * @return array Response with success status, data or error.
      */
-    public static function execute(int $cmid, string $instructions): array {
+    public static function execute(int $cmid, string $instructions, int $slideid = 0): array {
         global $DB;
 
         // Validate parameters.
         $params = self::validate_parameters(self::execute_parameters(), [
             'cmid' => $cmid,
             'instructions' => $instructions,
+            'slideid' => $slideid,
         ]);
 
         // Retrieve module and validate context.
@@ -80,12 +88,28 @@ class regenerate_module_content extends external_api {
             ];
         }
 
+        $slideidparam = (int) $params['slideid'];
+
+        if ($cm->modname === 'slideshow' && $slideidparam <= 0) {
+            return [
+                'success' => false,
+                'error' => ['message' => 'slideid is required for slideshow editing.'],
+            ];
+        }
+
         // Call the Dixeo service to edit the module.
         $service = new module_generation_service();
-        $result = $service->edit_module($params['cmid'], $params['instructions']);
+        if ($cm->modname === 'slideshow') {
+            $result = $service->edit_slide($params['cmid'], $slideidparam, $params['instructions']);
+        } else {
+            $result = $service->edit_module($params['cmid'], $params['instructions']);
+        }
 
         if ($result->is_success()) {
-            $adapter = (new activity_adapter_factory($DB))->create($params['cmid']);
+            $adapter = (new activity_adapter_factory($DB))->create(
+                $params['cmid'],
+                $slideidparam > 0 ? $slideidparam : null
+            );
             $contentfield = $adapter->get_content_field();
             $content = $result->result !== null
                 ? ($result->result['data'][$contentfield] ?? '')

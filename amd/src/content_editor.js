@@ -32,6 +32,7 @@ define([
 
     var Editor = {
         cmid: 0,
+        slideid: 0,
         activeJobId: null,
         generationToken: 0,
         pollingTimer: null,
@@ -44,8 +45,9 @@ define([
         layoutInitialJson: '',
         layoutRef: null,
 
-        init: function(cmid, layoutJson) {
+        init: function(cmid, layoutJson, slideid) {
             this.cmid = cmid;
+            this.slideid = typeof slideid === 'number' && slideid > 0 ? slideid : 0;
             this.layoutInitialJson = typeof layoutJson === 'string' ? layoutJson : '';
             this.cacheDom();
             this.loadStrings().then(function(strings) {
@@ -430,7 +432,8 @@ define([
                 }
                 var args = {
                     cmid: self.cmid,
-                    instructions: instructions
+                    instructions: instructions,
+                    slideid: self.slideid
                 };
                 if (autosaveKeys &&
                     autosaveKeys.autosave_contextid &&
@@ -476,7 +479,8 @@ define([
                 methodname: 'local_dixeo_editor_get_regenerate_module_content_status',
                 args: {
                     cmid: this.cmid,
-                    jobid: this.activeJobId
+                    jobid: this.activeJobId,
+                    slideid: this.slideid
                 }
             }])[0].then(function(response) {
                 if (token !== self.generationToken) {
@@ -599,8 +603,8 @@ define([
     };
 
     return {
-        init: function(cmid, layoutJson) {
-            Editor.init(cmid, layoutJson);
+        init: function(cmid, layoutJson, slideid) {
+            Editor.init(cmid, layoutJson, slideid);
         }
     };
 });
