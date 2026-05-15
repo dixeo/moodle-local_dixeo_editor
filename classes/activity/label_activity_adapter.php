@@ -35,7 +35,19 @@ class label_activity_adapter extends base_activity_adapter {
     }
 
     public function get_redirect_url(int $courseid, int $cmid): moodle_url {
-        // Labels have no dedicated view page; redirect to course.
-        return new moodle_url('/course/view.php', ['id' => $courseid]);
+        // Labels have no dedicated view page; return to the course section that contains this label.
+        try {
+            $modinfo = get_fast_modinfo($courseid);
+            $cm = $modinfo->get_cm($cmid);
+            $sectionid = (int) $cm->sectionid;
+            if ($sectionid <= 0) {
+                return new moodle_url('/course/view.php', ['id' => $courseid]);
+            }
+            $url = new moodle_url('/course/section.php', ['id' => $sectionid]);
+            $url->set_anchor('module-' . $cmid);
+            return $url;
+        } catch (\Throwable $e) {
+            return new moodle_url('/course/view.php', ['id' => $courseid]);
+        }
     }
 }
