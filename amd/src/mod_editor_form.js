@@ -52,6 +52,26 @@ define(['jquery', 'core/templates', 'core/notification', 'core/ajax'], function(
     }
 
     /**
+     * Clone the parent page's theme stylesheet into the TinyMCE iframe so
+     * FontAwesome (and any other content-relevant CSS) renders in-editor.
+     *
+     * @param {Document} iframeDoc - The TinyMCE iframe's document.
+     */
+    function injectThemeStylesIntoEditor(iframeDoc) {
+        if (!iframeDoc || !iframeDoc.head || iframeDoc.querySelector('link[data-dixeo-theme]')) {
+            return;
+        }
+        const themeLinks = document.querySelectorAll('link[rel="stylesheet"][href*="/theme/styles.php"]');
+        themeLinks.forEach(link => {
+            const clone = iframeDoc.createElement('link');
+            clone.rel = 'stylesheet';
+            clone.href = link.href;
+            clone.setAttribute('data-dixeo-theme', '1');
+            iframeDoc.head.appendChild(clone);
+        });
+    }
+
+    /**
      * Moves the cursor to the end of the given textarea.
      *
      * This function ensures that when a user interacts with the textarea,
@@ -76,6 +96,7 @@ define(['jquery', 'core/templates', 'core/notification', 'core/ajax'], function(
             waitForEditorIframe()
                 .then((iframeDoc) => {
                     this.editorDocument = iframeDoc;
+                    injectThemeStylesIntoEditor(iframeDoc);
                     this.setupEventListeners(cmid, slideid);
                 })
                 .catch(Notification.exception);

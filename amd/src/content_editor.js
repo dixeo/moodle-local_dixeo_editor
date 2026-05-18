@@ -54,9 +54,48 @@ define([
                 Editor.strings = strings;
                 Editor.setupUi();
                 Editor.bindEditorUndoRedoBridge();
+                Editor.injectThemeStylesIntoEditor();
             }).catch(function(error) {
                 Notification.exception(error);
             });
+        },
+
+        /**
+         * Clone the parent page's theme stylesheet into the TinyMCE iframe so
+         * FontAwesome (and any other content-relevant CSS) renders in-editor.
+         *
+         * @param {number} [timeoutMs]
+         */
+        injectThemeStylesIntoEditor: function(timeoutMs) {
+            var timeout = timeoutMs || 30000;
+            var startedAt = Date.now();
+            var themeLinks = Array.prototype.slice.call(
+                document.querySelectorAll('link[rel="stylesheet"][href*="/theme/styles.php"]')
+            );
+            if (themeLinks.length === 0) {
+                return;
+            }
+            (function waitForIframe() {
+                var iframe = document.querySelector(SELECTORS.editorIframe);
+                if (iframe && iframe.contentDocument && iframe.contentDocument.head) {
+                    var doc = iframe.contentDocument;
+                    if (doc.querySelector('link[data-dixeo-theme]')) {
+                        return;
+                    }
+                    themeLinks.forEach(function(link) {
+                        var clone = doc.createElement('link');
+                        clone.rel = 'stylesheet';
+                        clone.href = link.href;
+                        clone.setAttribute('data-dixeo-theme', '1');
+                        doc.head.appendChild(clone);
+                    });
+                    return;
+                }
+                if (Date.now() - startedAt > timeout) {
+                    return;
+                }
+                window.setTimeout(waitForIframe, 300);
+            }());
         },
 
         cacheDom: function() {
