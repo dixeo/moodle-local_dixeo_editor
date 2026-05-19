@@ -35,15 +35,6 @@ if (isset($PAGE) && strpos($PAGE->pagetype, 'course-view') === 0 && $PAGE->user_
     $PAGE->requires->js_call_amd('local_dixeo_editor/action_menu_edit', 'init');
 }
 
-// Inject AI edit buttons on the slideshow slides management page.
-if (isset($PAGE)
-    && $PAGE->pagetype === 'mod-slideshow-slides'
-    && $PAGE->cm !== null
-    && $PAGE->cm->modname === 'slideshow'
-    && has_capability('moodle/course:manageactivities', context_module::instance($PAGE->cm->id))) {
-    $PAGE->requires->js_call_amd('local_dixeo_editor/slideshow_ai_buttons', 'init', [(int) $PAGE->cm->id]);
-}
-
 function local_dixeo_editor_extend_navigation_course(navigation_node $navigation, stdClass $course, context $context) {
     global $PAGE;
 
