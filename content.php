@@ -33,7 +33,7 @@ $cmid = required_param('cmid', PARAM_INT);
 $subid = optional_param('slideid', 0, PARAM_INT) ?: null;
 $cm = get_coursemodule_from_id('', $cmid);
 $context = context_module::instance($cm->id);
-require_capability('moodle/course:manageactivities', $context);
+\local_dixeo_editor\local\editor_capability::require_edit_module($context);
 
 $course = $DB->get_record('course', ['id' => $cm->course], '*', MUST_EXIST);
 $PAGE->set_cm($cm, $course);

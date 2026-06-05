@@ -33,6 +33,7 @@ use invalid_parameter_exception;
 use local_dixeo\context\context_builder_factory;
 use local_dixeo\external\service_factory;
 use local_dixeo\service\tiny_autosave_draft_service;
+use local_dixeo_editor\local\editor_capability;
 
 class start_regenerate_module_content extends external_api {
     /**
@@ -99,7 +100,7 @@ class start_regenerate_module_content extends external_api {
         $cm = get_coursemodule_from_id('', $params['cmid'], 0, false, MUST_EXIST);
         $context = context_module::instance($cm->id);
         self::validate_context($context);
-        require_capability('moodle/course:manageactivities', $context);
+        editor_capability::require_edit_module($context);
 
         try {
             require_once($CFG->dirroot . '/local/dixeo/lib.php');

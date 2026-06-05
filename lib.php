@@ -26,6 +26,8 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+use local_dixeo_editor\local\editor_capability;
+
 /** @var string Path to the content edition page. */
 define('LOCAL_DIXEO_EDITOR_CONTENT_EDIT_PATH', '/local/dixeo_editor/content_edition.php');
 
@@ -38,7 +40,8 @@ if (isset($PAGE) && strpos($PAGE->pagetype, 'course-view') === 0 && $PAGE->user_
 function local_dixeo_editor_extend_navigation_course(navigation_node $navigation, stdClass $course, context $context) {
     global $PAGE;
 
-    if ($PAGE->cm !== null && $PAGE->cm->modname === 'page' && has_capability('moodle/course:manageactivities', $context)) {
+    if ($PAGE->cm !== null && $PAGE->cm->modname === 'page'
+            && editor_capability::can_edit_module($PAGE->cm->context)) {
         // Call init js script.
         $url = new moodle_url(LOCAL_DIXEO_EDITOR_CONTENT_EDIT_PATH, ['cmid' => $PAGE->cm->id]);
         $PAGE->requires->js_call_amd('local_dixeo_editor/display_edit', 'init', [
@@ -63,7 +66,7 @@ function local_dixeo_editor_add_button_to_context_header($page) {
         return $editicon;
     }
 
-    if (has_capability('moodle/course:manageactivities', $page->cm->context)) {
+    if (editor_capability::can_edit_module($page->cm->context)) {
         $editstring = get_string('editcontent', 'local_dixeo_editor');
         $editurl = new moodle_url(LOCAL_DIXEO_EDITOR_CONTENT_EDIT_PATH, ['cmid' => $page->cm->id]);
         $editicon = $OUTPUT->pix_icon('t/editstring', $editstring, 'core', ['class' => 'icon']);
@@ -88,7 +91,7 @@ function local_dixeo_editor_add_button_to_context_header($page) {
  * @return array List of action link data for the activity menu.
  */
 function local_dixeo_editor_add_button_to_activity_menu($page) {
-    global $OUTPUT, $USER;
+    global $OUTPUT;
 
     $actions = [];
 
@@ -102,9 +105,7 @@ function local_dixeo_editor_add_button_to_activity_menu($page) {
         return $actions;
     }
 
-    // Check if the user is an student.
-    $isstudent = !is_enrolled($page->context, $USER, 'moodle/course:update');
-    if ($isstudent) {
+    if (!editor_capability::can_edit_module($page->cm->context)) {
         return $actions;
     }
 

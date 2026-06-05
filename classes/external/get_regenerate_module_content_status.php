@@ -31,6 +31,7 @@ use core_external\external_single_structure;
 use core_external\external_value;
 use local_dixeo\external\service_factory;
 use local_dixeo_editor\activity\activity_adapter_factory;
+use local_dixeo_editor\local\editor_capability;
 
 class get_regenerate_module_content_status extends external_api {
     /**
@@ -67,7 +68,7 @@ class get_regenerate_module_content_status extends external_api {
         $cm = get_coursemodule_from_id('', $params['cmid'], 0, false, MUST_EXIST);
         $context = context_module::instance($cm->id);
         self::validate_context($context);
-        require_capability('moodle/course:manageactivities', $context);
+        editor_capability::require_edit_module($context);
 
         try {
             $statusdto = service_factory::get_job_service()->get_job_status($params['jobid']);
