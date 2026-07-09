@@ -27,13 +27,18 @@ namespace local_dixeo_editor\external;
 use context_module;
 use core_external\external_api;
 use core_external\external_function_parameters;
+use core_external\external_multiple_structure;
 use core_external\external_single_structure;
 use core_external\external_value;
 use local_dixeo\external\service_factory;
+use local_dixeo\service\image\content\editor_regenerate_service;
 use local_dixeo_editor\activity\activity_adapter_factory;
 use local_dixeo_editor\event\regenerate_completed;
 use local_dixeo_editor\local\content_sanitizer;
 use local_dixeo_editor\local\editor_capability;
+use local_dixeo_editor\local\editor_image_context_factory;
+use local_dixeo_editor\local\editor_job_access;
+use local_dixeo_editor\local\editor_session_repository;
 use local_dixeo_editor\local\external_error;
 
 /**
@@ -49,6 +54,7 @@ class get_regenerate_module_content_status extends external_api {
         return new external_function_parameters([
             'cmid' => new external_value(PARAM_INT, 'Course module ID'),
             'jobid' => new external_value(PARAM_RAW, 'Job id'),
+            'sessionid' => new external_value(PARAM_INT, 'Editor session ID'),
             'slideid' => new external_value(
                 PARAM_INT,
                 'Slide row ID (required for slideshow, 0 otherwise)',
@@ -63,15 +69,17 @@ class get_regenerate_module_content_status extends external_api {
      *
      * @param int $cmid Course module ID.
      * @param string $jobid Job id.
+     * @param int $sessionid Editor session ID.
      * @param int $slideid Slide row ID (slideshow only, 0 otherwise).
      * @return array
      */
-    public static function execute(int $cmid, string $jobid, int $slideid = 0): array {
+    public static function execute(int $cmid, string $jobid, int $sessionid, int $slideid = 0): array {
         global $DB, $USER;
 
         $params = self::validate_parameters(self::execute_parameters(), [
             'cmid' => $cmid,
             'jobid' => $jobid,
+            'sessionid' => $sessionid,
             'slideid' => $slideid,
         ]);
 
@@ -80,12 +88,24 @@ class get_regenerate_module_content_status extends external_api {
         self::validate_context($context);
         editor_capability::require_edit_module($context);
 
+        $session = editor_session_repository::get($params['sessionid']);
+        if (!$session || (int) $session->userid !== (int) $USER->id) {
+            return [
+                'success' => false,
+                'error' => ['message' => 'Invalid editor session'],
+            ];
+        }
+
         try {
             // Editor regenerate jobs are initiator-scoped.
-            $statusdto = service_factory::get_job_service()->get_job_status(
+            editor_job_access::require_initiator_job(
                 $params['jobid'],
                 (int) $cm->course,
                 (int) $USER->id
+            );
+            $statusdto = service_factory::get_job_service()->get_job_status(
+                $params['jobid'],
+                (int) $cm->course
             );
             $status = self::normalize_status($statusdto->status, $statusdto->errorcode);
 
@@ -94,6 +114,7 @@ class get_regenerate_module_content_status extends external_api {
                 'status' => $status,
                 'progress' => $statusdto->progress,
                 'content' => '',
+                'pendingplaceholderids' => [],
                 'errormessage' => $statusdto->errormessage ?? '',
             ];
 
@@ -104,7 +125,15 @@ class get_regenerate_module_content_status extends external_api {
                 $contentfield = $adapter->get_content_field();
                 $resultdata = $statusdto->result['data'] ?? [];
                 $rawcontent = $resultdata[$contentfield] ?? ($resultdata['content'] ?? '');
-                $data['content'] = content_sanitizer::sanitize((string) $rawcontent);
+                $imagecontext = editor_image_context_factory::from_cmid($params['cmid'], $subid, $params['sessionid']);
+                $decoded = editor_regenerate_service::decode_api_content(
+                    (string) $rawcontent,
+                    $imagecontext,
+                    (int) $USER->id
+                );
+
+                $data['content'] = content_sanitizer::sanitize($decoded->html);
+                $data['pendingplaceholderids'] = $decoded->newplaceholderids;
                 // Audit only: job id + cm — never put content in the event payload.
                 regenerate_completed::create_for_cm($cm, (int) $USER->id, $statusdto->jobid)->trigger();
             }
@@ -148,6 +177,11 @@ class get_regenerate_module_content_status extends external_api {
                 'status' => new external_value(PARAM_ALPHA, 'Job status'),
                 'progress' => new external_value(PARAM_INT, 'Progress percentage'),
                 'content' => new external_value(PARAM_RAW, 'Generated content'),
+                'pendingplaceholderids' => new external_multiple_structure(
+                    new external_value(PARAM_RAW, 'Placeholder id'),
+                    'Pending placeholder ids',
+                    VALUE_OPTIONAL
+                ),
                 'errormessage' => new external_value(PARAM_RAW, 'Error message when failed'),
             ], 'Data payload', VALUE_OPTIONAL),
             'error' => new external_single_structure([

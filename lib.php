@@ -30,6 +30,66 @@ use local_dixeo_editor\local\editor_capability;
 /** @var string Path to the content edition page. */
 define('LOCAL_DIXEO_EDITOR_CONTENT_EDIT_PATH', '/local/dixeo_editor/content_edition.php');
 
+/**
+ * Serve draft editor image files.
+ *
+ * @param stdClass $course
+ * @param stdClass $cm
+ * @param context $context
+ * @param string $filearea
+ * @param array $args
+ * @param bool $forcedownload
+ * @param array $options
+ * @return bool
+ */
+function local_dixeo_editor_pluginfile(
+    $course,
+    $cm,
+    $context,
+    $filearea,
+    $args,
+    $forcedownload,
+    array $options = []
+) {
+    global $USER;
+
+    if ($context->contextlevel !== CONTEXT_MODULE) {
+        return false;
+    }
+
+    $draftareas = ['draft_page', 'draft_label', 'draft_slideshow'];
+    if (!in_array($filearea, $draftareas, true)) {
+        return false;
+    }
+
+    require_login($course, true, $cm);
+    if (!editor_capability::can_edit_module($context)) {
+        return false;
+    }
+
+    $itemid = (int) array_shift($args);
+    // Draft itemid is the editor session id — only the session owner may fetch drafts.
+    $session = \local_dixeo_editor\local\editor_session_repository::get($itemid);
+    if (
+        !$session
+        || (int) $session->userid !== (int) $USER->id
+        || (int) $session->cmid !== (int) $cm->id
+    ) {
+        return false;
+    }
+
+    $filename = array_pop($args);
+    $filepath = $args ? '/' . implode('/', $args) . '/' : '/';
+
+    $fs = get_file_storage();
+    $file = $fs->get_file($context->id, 'local_dixeo_editor', $filearea, $itemid, $filepath, $filename);
+    if (!$file || $file->is_directory()) {
+        return false;
+    }
+
+    send_stored_file($file, 0, 0, $forcedownload, $options);
+}
+
 global $PAGE;
 if (isset($PAGE) && strpos($PAGE->pagetype, 'course-view') === 0 && $PAGE->user_is_editing()) {
     // Enqueue our module on course view when editing mode is enabled.

@@ -52,6 +52,12 @@ $PAGE->add_body_class('limitedwidth');
 $factory = new \local_dixeo_editor\activity\activity_adapter_factory($DB);
 $activityadapter = $factory->create($cmid, $subid);
 
+$editorsession = \local_dixeo_editor\local\editor_session_repository::get_or_create_active(
+    $cmid,
+    $subid,
+    (int) $USER->id
+);
+
 // Get editor options.
 $editoroptions = page_get_editor_options($context);
 
@@ -62,17 +68,39 @@ $mform = new \local_dixeo_editor\form\mod_editor_form(null, [
     'cmid' => $cm->id,
     'editoroptions' => $editoroptions,
     'fieldname' => $fieldname,
+    'editorsessionid' => (int) $editorsession->id,
 ]);
 
 if ($mform->is_cancelled()) {
+    $sessionid = optional_param('editorsessionid', 0, PARAM_INT);
+    if ($sessionid > 0) {
+        \local_dixeo_editor\local\editor_session_repository::require_owned(
+            $sessionid,
+            (int) $USER->id,
+            (int) $cmid
+        );
+        \local_dixeo_editor\local\editor_session_repository::discard(
+            $sessionid,
+            $activityadapter->get_modname(),
+            $context
+        );
+    }
     redirect($activityadapter->get_redirect_url($course->id, $cmid));
 } else if ($data = $mform->get_data()) {
     $content = $data->{$fieldname}['text'];
     $format  = $data->{$fieldname}['format'];
     $itemid  = $data->{$fieldname}['itemid'];
+    $sessionid = isset($data->editorsessionid) ? (int) $data->editorsessionid : 0;
+    if ($sessionid > 0) {
+        \local_dixeo_editor\local\editor_session_repository::require_owned(
+            $sessionid,
+            (int) $USER->id,
+            (int) $cmid
+        );
+    }
 
     // Save using the adapter.
-    $activityadapter->save_content($content, $format, $itemid, $editoroptions);
+    $activityadapter->save_content($content, $format, $itemid, $editoroptions, $sessionid > 0 ? $sessionid : null);
     // Trigger update event.
     \core\event\course_module_updated::create_from_cm($cm)->trigger();
     // Rebuild course cache.
@@ -105,6 +133,10 @@ echo $OUTPUT->render_from_template('local_dixeo_editor/mod_content_editor', [
     'cancelurl' => $activityadapter->get_redirect_url($course->id, $cmid),
 ]);
 
-$PAGE->requires->js_call_amd('local_dixeo_editor/mod_editor_form', 'init', [$cmid, $subid]);
+$PAGE->requires->js_call_amd('local_dixeo_editor/mod_editor_form', 'init', [
+    $cmid,
+    $subid,
+    (int) $editorsession->id,
+]);
 
 echo $OUTPUT->footer();

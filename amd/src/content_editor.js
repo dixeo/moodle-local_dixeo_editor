@@ -39,13 +39,15 @@ define([
      * @param {number} cmid
      * @param {string} instructions
      * @param {number} slideid
+     * @param {number} sessionid
      * @param {Object|null} autosaveKeys
      * @returns {Object}
      */
-    function buildStartRegenerateArgs(cmid, instructions, slideid, autosaveKeys) {
+    function buildStartRegenerateArgs(cmid, instructions, slideid, sessionid, autosaveKeys) {
         var args = {
             cmid: cmid,
             instructions: instructions,
+            sessionid: sessionid,
             slideid: slideid
         };
         if (!autosaveKeys || !autosaveKeys.contextid || !autosaveKeys.pagehash || !autosaveKeys.elementid) {
@@ -61,6 +63,9 @@ define([
     var Editor = {
         cmid: 0,
         slideid: 0,
+        sessionId: 0,
+        pendingPlaceholderIds: [],
+        imagePollTimer: null,
         activeJobId: null,
         generationToken: 0,
         pollingTimer: null,
@@ -73,9 +78,10 @@ define([
         layoutInitialJson: '',
         layoutRef: null,
 
-        init: function(cmid, layoutJson, slideid) {
+        init: function(cmid, layoutJson, slideid, sessionid) {
             this.cmid = cmid;
             this.slideid = typeof slideid === 'number' && slideid > 0 ? slideid : 0;
+            this.sessionId = sessionid || 0;
             this.layoutInitialJson = typeof layoutJson === 'string' ? layoutJson : '';
             this.cacheDom();
             this.loadStrings().then(function(strings) {
@@ -526,7 +532,13 @@ define([
                 if (token !== self.generationToken) {
                     return null;
                 }
-                var args = buildStartRegenerateArgs(self.cmid, instructions, self.slideid, autosaveKeys);
+                var args = buildStartRegenerateArgs(
+                    self.cmid,
+                    instructions,
+                    self.slideid,
+                    self.sessionId,
+                    autosaveKeys
+                );
                 return Ajax.call([{
                     methodname: 'local_dixeo_editor_start_regenerate_module_content',
                     args: args
@@ -566,6 +578,7 @@ define([
                 args: {
                     cmid: this.cmid,
                     jobid: this.activeJobId,
+                    sessionid: this.sessionId,
                     slideid: this.slideid
                 }
             }])[0].then(function(response) {
@@ -582,7 +595,7 @@ define([
 
                 var status = response.data.status;
                 if (status === 'completed') {
-                    self.applyGeneratedContent(response.data.content || '');
+                    self.applyGeneratedContent(response.data.content || '', response.data.pendingplaceholderids || []);
                     self.activeJobId = null;
                     self.unlockAfterGeneration();
                     self.showSuccess();
@@ -663,10 +676,79 @@ define([
             this.activeJobId = null;
         },
 
-        applyGeneratedContent: function(content) {
+        applyGeneratedContent: function(content, pendingIds) {
             this.setEditorContent(content);
             this.refreshEditorUndoRedoButtons();
             this.syncUndoRedoAvailability();
+            if (pendingIds && pendingIds.length) {
+                this.startDraftImagePolling(pendingIds);
+            }
+        },
+
+        startDraftImagePolling: function(placeholderIds) {
+            var self = this;
+            this.pendingPlaceholderIds = placeholderIds.slice();
+            if (this.imagePollTimer) {
+                window.clearInterval(this.imagePollTimer);
+            }
+            this.imagePollTimer = window.setInterval(function() {
+                if (!self.pendingPlaceholderIds.length) {
+                    window.clearInterval(self.imagePollTimer);
+                    self.imagePollTimer = null;
+                    return;
+                }
+                Ajax.call([{
+                    methodname: 'local_dixeo_editor_get_editor_draft_image_status',
+                    args: {
+                        cmid: self.cmid,
+                        sessionid: self.sessionId,
+                        placeholderids: self.pendingPlaceholderIds,
+                        slideid: self.slideid
+                    }
+                }])[0].then(function(response) {
+                    if (!response.success || !response.data || !response.data.items) {
+                        return undefined;
+                    }
+                    response.data.items.forEach(function(item) {
+                        if (item.status === 'pending' || item.status === 'processing') {
+                            return;
+                        }
+                        if (!self.updatePlaceholderInEditor(item)) {
+                            return;
+                        }
+                        self.pendingPlaceholderIds = self.pendingPlaceholderIds.filter(function(id) {
+                            return id !== item.placeholderid;
+                        });
+                    });
+                    return undefined;
+                }).catch(function() {
+                    // Keep polling on transient errors.
+                });
+            }, 3000);
+        },
+
+        updatePlaceholderInEditor: function(item) {
+            var doc = this.getEditorIframeDocument();
+            if (!doc) {
+                return false;
+            }
+            var img = doc.querySelector('img[data-dixeo-img-gen="' + item.placeholderid + '"]');
+            if (!img) {
+                var filename = 'dixeo-gen-' + item.placeholderid + '.png';
+                img = doc.querySelector('img[src*="' + filename + '"]');
+            }
+            if (!img) {
+                return false;
+            }
+            if (item.imageurl) {
+                img.setAttribute('src', item.imageurl);
+            }
+            img.setAttribute('class', item.imgclass || 'img-fluid');
+            var editor = this.getModuleContentEditor();
+            if (editor && typeof editor.save === 'function') {
+                editor.save();
+            }
+            return true;
         },
 
         showSuccess: function() {
@@ -701,8 +783,8 @@ define([
     };
 
     return {
-        init: function(cmid, layoutJson, slideid) {
-            Editor.init(cmid, layoutJson, slideid);
+        init: function(cmid, layoutJson, slideid, sessionid) {
+            Editor.init(cmid, layoutJson, slideid, sessionid);
         }
     };
 });

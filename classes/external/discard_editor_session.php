@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Cancel asynchronous module regeneration job.
+ * Discard an editor session and its draft images.
  *
  * @package    local_dixeo_editor
  * @copyright  2026 Edunao SAS
@@ -29,41 +29,42 @@ use core_external\external_api;
 use core_external\external_function_parameters;
 use core_external\external_single_structure;
 use core_external\external_value;
-use local_dixeo\external\service_factory;
-use local_dixeo_editor\event\regenerate_cancelled;
+use local_dixeo_editor\activity\activity_adapter_factory;
 use local_dixeo_editor\local\editor_capability;
-use local_dixeo_editor\local\editor_job_access;
-use local_dixeo_editor\local\external_error;
+use local_dixeo_editor\local\editor_session_repository;
 
 /**
- * External API to cancel an asynchronous module regeneration job.
+ * External API to discard an editor session and its draft images.
  */
-class cancel_regenerate_module_content extends external_api {
+class discard_editor_session extends external_api {
     /**
-     * Define parameters for the web service.
+     * Describe parameters for the web service.
      *
      * @return external_function_parameters
      */
     public static function execute_parameters(): external_function_parameters {
         return new external_function_parameters([
             'cmid' => new external_value(PARAM_INT, 'Course module ID'),
-            'jobid' => new external_value(PARAM_RAW, 'Job id'),
+            'sessionid' => new external_value(PARAM_INT, 'Editor session ID'),
+            'slideid' => new external_value(PARAM_INT, 'Slide row ID', VALUE_DEFAULT, 0),
         ]);
     }
 
     /**
-     * Cancel a module content regeneration job.
+     * Discard the editor session belonging to the current user.
      *
      * @param int $cmid Course module ID.
-     * @param string $jobid Job id.
+     * @param int $sessionid Editor session ID.
+     * @param int $slideid Slide row ID (slideshow only, 0 otherwise).
      * @return array
      */
-    public static function execute(int $cmid, string $jobid): array {
-        global $USER;
+    public static function execute(int $cmid, int $sessionid, int $slideid = 0): array {
+        global $DB, $USER;
 
         $params = self::validate_parameters(self::execute_parameters(), [
             'cmid' => $cmid,
-            'jobid' => $jobid,
+            'sessionid' => $sessionid,
+            'slideid' => $slideid,
         ]);
 
         $cm = get_coursemodule_from_id('', $params['cmid'], 0, false, MUST_EXIST);
@@ -71,45 +72,28 @@ class cancel_regenerate_module_content extends external_api {
         self::validate_context($context);
         editor_capability::require_edit_module($context);
 
-        try {
-            // Editor regenerate jobs are initiator-scoped.
-            editor_job_access::require_initiator_job(
-                $params['jobid'],
-                (int) $cm->course,
-                (int) $USER->id
-            );
-            $result = service_factory::get_job_service()->cancel_job(
-                $params['jobid'],
-                (int) $cm->course
-            );
-            regenerate_cancelled::create_for_cm($cm, (int) $USER->id, $params['jobid'])->trigger();
-            return [
-                'success' => true,
-                'data' => [
-                    'jobid' => $params['jobid'],
-                    'message' => $result['status'] ?? 'cancelled',
-                ],
-            ];
-        } catch (\Throwable $e) {
-            return external_error::response($e);
+        $session = editor_session_repository::get($params['sessionid']);
+        if (!$session || (int) $session->userid !== (int) $USER->id) {
+            return ['success' => false, 'error' => ['message' => 'Invalid editor session']];
         }
+
+        $adapter = (new activity_adapter_factory($DB))->create($params['cmid'], $params['slideid'] > 0 ? $params['slideid'] : null);
+        editor_session_repository::discard($params['sessionid'], $adapter->get_modname(), $context);
+
+        return ['success' => true];
     }
 
     /**
-     * Define return values for the web service.
+     * Describe return values for the web service.
      *
      * @return external_single_structure
      */
     public static function execute_returns(): external_single_structure {
         return new external_single_structure([
-            'success' => new external_value(PARAM_BOOL, 'Call success'),
-            'data' => new external_single_structure([
-                'jobid' => new external_value(PARAM_RAW, 'Job id'),
-                'message' => new external_value(PARAM_RAW, 'Cancellation status'),
-            ], 'Data payload', VALUE_OPTIONAL),
+            'success' => new external_value(PARAM_BOOL, 'Success'),
             'error' => new external_single_structure([
                 'message' => new external_value(PARAM_RAW, 'Error message'),
-            ], 'Error payload', VALUE_OPTIONAL),
+            ], 'Error', VALUE_OPTIONAL),
         ]);
     }
 }

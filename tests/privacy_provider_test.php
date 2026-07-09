@@ -35,17 +35,19 @@ use local_dixeo_editor\privacy\provider;
  * @covers \local_dixeo_editor\privacy\provider
  */
 final class privacy_provider_test extends \advanced_testcase {
-    public function test_get_metadata_declares_preference_and_external_link(): void {
+    public function test_get_metadata_declares_session_files_preference_and_external_link(): void {
         $this->resetAfterTest(true);
 
         $collection = new collection('local_dixeo_editor');
         $updated = provider::get_metadata($collection);
         $items = $updated->get_collection();
 
-        $this->assertCount(2, $items);
+        $this->assertCount(4, $items);
 
         $names = array_map(static fn($item) => $item->get_name(), $items);
         $this->assertContains('local_dixeo_editor_content_panel_state', $names);
+        $this->assertContains('local_dixeo_editor_session', $names);
+        $this->assertContains('core_files', $names);
         $this->assertContains('dixeo_api', $names);
 
         $external = null;

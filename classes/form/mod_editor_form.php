@@ -51,6 +51,11 @@ class mod_editor_form extends \moodleform {
         $mform->addElement('hidden', 'cmid', $this->_customdata['cmid']);
         $mform->setType('cmid', PARAM_INT);
 
+        if (!empty($this->_customdata['editorsessionid'])) {
+            $mform->addElement('hidden', 'editorsessionid', (int) $this->_customdata['editorsessionid']);
+            $mform->setType('editorsessionid', PARAM_INT);
+        }
+
         $slideid = optional_param('slideid', 0, PARAM_INT);
         if ($slideid) {
             $mform->addElement('hidden', 'slideid', $slideid);

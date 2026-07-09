@@ -32,6 +32,7 @@ use local_dixeo\repository\job_repository;
 use local_dixeo\service\job_service;
 use local_dixeo_editor\external\cancel_regenerate_module_content;
 use local_dixeo_editor\external\get_regenerate_module_content_status;
+use local_dixeo_editor\local\editor_session_repository;
 use local_dixeo_editor\local\external_error;
 
 /**
@@ -62,6 +63,17 @@ final class regenerate_job_access_test extends \advanced_testcase {
         return $this->getDataGenerator()->create_and_enrol($course, 'editingteacher');
     }
 
+    /**
+     * Create an active editor session for a course module and user.
+     *
+     * @param int $cmid Course-module id.
+     * @param int $userid User id.
+     * @return int Editor session id.
+     */
+    private function create_editor_session(int $cmid, int $userid): int {
+        return (int) editor_session_repository::get_or_create_active($cmid, null, $userid)->id;
+    }
+
     public function test_status_rejects_foreign_course_job_without_content(): void {
         $generator = $this->getDataGenerator();
         $course = $generator->create_course();
@@ -78,7 +90,8 @@ final class regenerate_job_access_test extends \advanced_testcase {
         service_factory::set_test_job_service(new job_service($client, null, $repo));
 
         $this->setUser($user);
-        $result = get_regenerate_module_content_status::execute((int) $cm->id, 'job-foreign');
+        $sessionid = $this->create_editor_session((int) $cm->id, (int) $user->id);
+        $result = get_regenerate_module_content_status::execute((int) $cm->id, 'job-foreign', $sessionid);
         $this->assertDebuggingCalled();
 
         $this->assertFalse($result['success']);
@@ -105,7 +118,8 @@ final class regenerate_job_access_test extends \advanced_testcase {
         service_factory::set_test_job_service(new job_service(null, $poller, $repo));
 
         $this->setUser($peer);
-        $result = get_regenerate_module_content_status::execute((int) $cm->id, 'job-peer');
+        $sessionid = $this->create_editor_session((int) $cm->id, (int) $peer->id);
+        $result = get_regenerate_module_content_status::execute((int) $cm->id, 'job-peer', $sessionid);
         $this->assertDebuggingCalled();
 
         $this->assertFalse($result['success']);
@@ -142,7 +156,8 @@ final class regenerate_job_access_test extends \advanced_testcase {
         service_factory::set_test_job_service(new job_service(null, $poller, $repo));
 
         $this->setUser($owner);
-        $result = get_regenerate_module_content_status::execute((int) $cm->id, 'job-mine');
+        $sessionid = $this->create_editor_session((int) $cm->id, (int) $owner->id);
+        $result = get_regenerate_module_content_status::execute((int) $cm->id, 'job-mine', $sessionid);
 
         $this->assertTrue($result['success']);
         $this->assertSame('job-mine', $result['data']['jobid']);

@@ -15,21 +15,23 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * local_dixeo_editor version file.
+ * Scheduled task definitions for local_dixeo_editor.
  *
  * @package    local_dixeo_editor
- * @copyright  2025 Edunao SAS (contact@edunao.com)
- * @author     Pierre FACQ <pierre.facq@edunao.com>
+ * @copyright  2026 Edunao SAS
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->component = 'local_dixeo_editor';
-$plugin->version = 2026072201;
-$plugin->requires = 2022112800;
-$plugin->maturity = MATURITY_STABLE;
-$plugin->release = '1.2.3';
-$plugin->dependencies = [
-    'local_dixeo' => 2026072200,
+$tasks = [
+    [
+        'classname' => 'local_dixeo_editor\task\cleanup_editor_sessions',
+        'blocking' => 0,
+        'minute' => 'R',
+        'hour' => '*',
+        'day' => '*',
+        'month' => '*',
+        'dayofweek' => '*',
+    ],
 ];

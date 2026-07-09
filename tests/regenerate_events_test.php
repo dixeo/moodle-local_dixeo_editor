@@ -31,12 +31,14 @@ use local_dixeo\dto\operation_result;
 use local_dixeo\external\service_factory;
 use local_dixeo\repository\job_repository;
 use local_dixeo\service\job_service;
+use local_dixeo\service\module_generation_service;
 use local_dixeo_editor\event\regenerate_cancelled;
 use local_dixeo_editor\event\regenerate_completed;
 use local_dixeo_editor\event\regenerate_started;
 use local_dixeo_editor\external\cancel_regenerate_module_content;
 use local_dixeo_editor\external\get_regenerate_module_content_status;
 use local_dixeo_editor\external\start_regenerate_module_content;
+use local_dixeo_editor\local\editor_session_repository;
 
 /**
  * Regenerate lifecycle events must fire without content/instructions in other.
@@ -79,6 +81,17 @@ final class regenerate_events_test extends \advanced_testcase {
         $this->assertArrayNotHasKey('prompt', $event->other);
     }
 
+    /**
+     * Create an active editor session for a course module and user.
+     *
+     * @param int $cmid Course-module id.
+     * @param int $userid User id.
+     * @return int Editor session id.
+     */
+    private function create_editor_session(int $cmid, int $userid): int {
+        return (int) editor_session_repository::get_or_create_active($cmid, null, $userid)->id;
+    }
+
     public function test_start_emits_regenerate_started(): void {
         $generator = $this->getDataGenerator();
         $course = $generator->create_course();
@@ -89,22 +102,24 @@ final class regenerate_events_test extends \advanced_testcase {
         ]);
         $cm = get_coursemodule_from_instance('page', $page->id, $course->id, false, MUST_EXIST);
 
-        $jobservice = $this->getMockBuilder(job_service::class)
+        $modgenservice = $this->getMockBuilder(module_generation_service::class)
             ->disableOriginalConstructor()
-            ->onlyMethods(['submit_job'])
+            ->onlyMethods(['submit_edit_job'])
             ->getMock();
-        $jobservice->expects($this->once())
-            ->method('submit_job')
-            ->with('/v1/modules/edit', $this->callback(static function (array $payload): bool {
-                return isset($payload['courseId'], $payload['userId'], $payload['moduleType'])
-                    && !empty($payload['instructions']);
+        $modgenservice->expects($this->once())
+            ->method('submit_edit_job')
+            ->with($this->callback(static function (array $payload): bool {
+                return isset($payload['courseId'], $payload['moduleType'], $payload['instructions'], $payload['context'])
+                    && $payload['moduleType'] === 'page'
+                    && str_contains((string) $payload['instructions'], 'Make it clearer');
             }))
             ->willReturn(operation_result::pending('job-start-event', 'pending', 0));
-        service_factory::set_test_job_service($jobservice);
+        service_factory::set_test_module_generation_service($modgenservice);
 
         $this->setUser($user);
+        $sessionid = $this->create_editor_session((int) $cm->id, (int) $user->id);
         $sink = $this->redirectEvents();
-        $result = start_regenerate_module_content::execute((int) $cm->id, 'Make it clearer');
+        $result = start_regenerate_module_content::execute((int) $cm->id, 'Make it clearer', $sessionid);
 
         $this->assertTrue($result['success']);
         $this->assertSame('job-start-event', $result['data']['jobid']);
@@ -155,8 +170,9 @@ final class regenerate_events_test extends \advanced_testcase {
         service_factory::set_test_job_service(new job_service(null, $poller, $repo));
 
         $this->setUser($user);
+        $sessionid = $this->create_editor_session((int) $cm->id, (int) $user->id);
         $sink = $this->redirectEvents();
-        $result = get_regenerate_module_content_status::execute((int) $cm->id, 'job-complete-event');
+        $result = get_regenerate_module_content_status::execute((int) $cm->id, 'job-complete-event', $sessionid);
 
         $this->assertTrue($result['success']);
         $this->assertSame('completed', $result['data']['status']);
