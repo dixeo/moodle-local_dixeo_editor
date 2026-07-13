@@ -31,7 +31,6 @@ use moodle_url;
  * Interface for activity-specific content adapters.
  */
 interface activity_adapter_interface {
-
     /**
      * Return the DB/API field name used for content (e.g. 'content', 'intro').
      *

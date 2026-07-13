@@ -1,3 +1,24 @@
+{{!
+    @template local_dixeo_editor/content_editor
+
+    Dockable AI content editor shell with TinyMCE form region.
+
+    Context variables required for this template:
+    * activityname - Activity title shown in the header
+    * cancelurl - URL for the cancel control
+    * formhtml - Rendered mod_editor_form markup (includes form#mod_editor_form)
+    * config.wwwroot - Site wwwroot for asset URLs
+
+    Example context (json):
+    {
+        "activityname": "Example page",
+        "cancelurl": "https://example.com/mod/page/view.php?id=1",
+        "formhtml": "<form id=\"mod_editor_form\" method=\"post\" action=\"#\"><div id=\"fitem_id_modulecontent\"></div></form>",
+        "config": {
+            "wwwroot": "https://example.com"
+        }
+    }
+}}
 <div id="dixeo_editor_layout_root"
      class="dixeo-editor-layout-root dixeo-editor-layout-mode-float flex-grow-1 position-relative">
     <div id="dixeo_editor_editor_section"
@@ -19,9 +40,8 @@
                     {{#str}} cancelshort, local_dixeo_editor {{/str}}
                 </a>
                 <button id="save_button"
-                        type="submit"
+                        type="button"
                         class="btn btn-primary ml-2"
-                        form="mod_editor_form"
                         title="{{#str}} save, local_dixeo_editor {{/str}}">
                     {{#str}} save, local_dixeo_editor {{/str}}
                 </button>

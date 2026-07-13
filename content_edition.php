@@ -26,7 +26,7 @@
 require_once('../../config.php');
 require_once($CFG->libdir . '/formslib.php');
 require_once($CFG->libdir . '/filelib.php');
-require_once($CFG->dirroot.'/mod/page/locallib.php');
+require_once($CFG->dirroot . '/mod/page/locallib.php');
 
 // Get the course module id from parameters.
 $cmid = required_param('cmid', PARAM_INT);

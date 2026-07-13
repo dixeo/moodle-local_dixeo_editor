@@ -24,7 +24,6 @@ namespace local_dixeo_editor\local;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class external_error {
-
     /**
      * Build a failure response with a generic client message.
      *

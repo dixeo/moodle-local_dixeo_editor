@@ -32,7 +32,6 @@ use stdClass;
  * Activity adapter for Label modules.
  */
 class label_activity_adapter extends base_activity_adapter {
-
     /**
      * Resolve the label instance id from the course module.
      *

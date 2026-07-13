@@ -32,7 +32,6 @@ use stdClass;
  * Activity adapter for Page modules.
  */
 class page_activity_adapter extends base_activity_adapter {
-
     /**
      * Resolve the page instance id from the course module.
      *

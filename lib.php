@@ -46,8 +46,10 @@ if (isset($PAGE) && strpos($PAGE->pagetype, 'course-view') === 0 && $PAGE->user_
 function local_dixeo_editor_extend_navigation_course(navigation_node $navigation, stdClass $course, context $context) {
     global $PAGE;
 
-    if ($PAGE->cm !== null && $PAGE->cm->modname === 'page'
-            && editor_capability::can_edit_module($PAGE->cm->context)) {
+    if (
+        $PAGE->cm !== null && $PAGE->cm->modname === 'page'
+        && editor_capability::can_edit_module($PAGE->cm->context)
+    ) {
         // Call init js script.
         $url = new moodle_url(LOCAL_DIXEO_EDITOR_CONTENT_EDIT_PATH, ['cmid' => $PAGE->cm->id]);
         $PAGE->requires->js_call_amd('local_dixeo_editor/display_edit', 'init', [

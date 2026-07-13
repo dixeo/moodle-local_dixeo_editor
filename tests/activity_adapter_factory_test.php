@@ -41,7 +41,6 @@ require_once($CFG->dirroot . '/course/modlib.php');
  * @covers \local_dixeo_editor\activity\slideshow_slide_activity_adapter::assert_belongs_to_cm
  */
 final class activity_adapter_factory_test extends \advanced_testcase {
-
     /**
      * Create a slideshow module with one slide for testing.
      *
@@ -49,6 +48,10 @@ final class activity_adapter_factory_test extends \advanced_testcase {
      */
     private function create_slideshow_with_slide(): array {
         global $DB;
+
+        if (!$DB->record_exists('modules', ['name' => 'slideshow'])) {
+            $this->markTestSkipped('The mod_slideshow plugin is required for this test.');
+        }
 
         $this->setAdminUser();
         $gen = $this->getDataGenerator();

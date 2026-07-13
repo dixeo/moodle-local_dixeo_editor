@@ -45,7 +45,6 @@ use stdClass;
  *     revision bumps on the parent record
  */
 abstract class base_activity_adapter implements activity_adapter_interface {
-
     /** @var stdClass The DB record for this activity instance (or sub-row). */
     protected stdClass $record;
 

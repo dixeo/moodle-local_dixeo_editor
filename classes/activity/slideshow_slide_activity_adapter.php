@@ -37,7 +37,6 @@ use stdClass;
  * Activity adapter for a single slideshow slide.
  */
 class slideshow_slide_activity_adapter extends base_activity_adapter {
-
     /**
      * Resolve the slide row id from the course module and sub-id.
      *

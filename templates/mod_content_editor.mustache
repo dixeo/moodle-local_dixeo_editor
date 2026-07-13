@@ -1,3 +1,23 @@
+{{!
+    @template local_dixeo_editor/mod_content_editor
+
+    Legacy full-page editor layout with AI footer toolbar.
+
+    Context variables required for this template:
+    * activityname - Activity title shown in the header
+    * cancelurl - URL for the cancel control
+    * formhtml - Rendered mod_editor_form markup (includes form#mod_editor_form)
+
+    Example context (json):
+    {
+        "activityname": "Example page",
+        "cancelurl": "https://example.com/mod/page/view.php?id=1",
+        "formhtml": "<form id=\"mod_editor_form\" method=\"post\" action=\"#\"><div id=\"fitem_id_modulecontent\"></div></form>",
+        "config": {
+            "wwwroot": "https://example.com"
+        }
+    }
+}}
 <div id="content_editor" class="d-flex flex-column flex-grow-1 mt-2">
     <div class="row justify-content-between align-items-end px-3 mb-2">
         <h2 class="mb-0">{{ activityname }}</h2>
@@ -10,9 +30,8 @@
                 <i class="fa fa-times"></i>
             </a>
             <button id="apply_button"
-                    type="submit"
+                    type="button"
                     class="btn btn-success ml-2"
-                    form="mod_editor_form"
                     title="{{#str}} save, local_dixeo_editor {{/str}}"
             >
                 OK

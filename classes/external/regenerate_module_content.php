@@ -39,7 +39,6 @@ use local_dixeo_editor\activity\activity_adapter_factory;
  * Regenerate module content using AI via the Dixeo service.
  */
 class regenerate_module_content extends external_api {
-
     /**
      * Describe the parameters for the execute function.
      *

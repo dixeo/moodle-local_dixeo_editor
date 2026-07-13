@@ -35,7 +35,6 @@ use local_dixeo_editor\privacy\provider;
  * @covers \local_dixeo_editor\privacy\provider
  */
 final class privacy_provider_test extends \advanced_testcase {
-
     public function test_get_metadata_declares_preference_and_external_link(): void {
         $this->resetAfterTest(true);
 
