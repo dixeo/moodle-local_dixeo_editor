@@ -53,6 +53,23 @@ class slideshow_slide_activity_adapter extends base_activity_adapter {
     }
 
     /**
+     * Ensure the slide row belongs to the authorized slideshow module instance.
+     *
+     * @param stdClass $cm Course module record.
+     * @param int $slideid Slideshow slide row id.
+     * @return void
+     * @throws \moodle_exception When the slide is not part of this module.
+     */
+    public static function assert_belongs_to_cm(stdClass $cm, int $slideid): void {
+        global $DB;
+
+        $slide = $DB->get_record('slideshow_slide', ['id' => $slideid], 'slideshow', MUST_EXIST);
+        if ((int) $slide->slideshow !== (int) $cm->instance) {
+            throw new \moodle_exception('error:slidenotinslideshow', 'local_dixeo');
+        }
+    }
+
+    /**
      * Return the module name.
      *
      * @return string

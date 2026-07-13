@@ -97,6 +97,10 @@ class activity_adapter_factory {
 
         $recordid = $classname::resolve_record_id($cm, $subid);
 
+        if ($cm->modname === 'slideshow') {
+            slideshow_slide_activity_adapter::assert_belongs_to_cm($cm, $recordid);
+        }
+
         return new $classname($recordid, $context, $this->db);
     }
 }
