@@ -1,5 +1,4 @@
 <?php
-
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -32,6 +31,7 @@ $cmid = required_param('cmid', PARAM_INT);
 // Optional child record id for composite modules (e.g. slideshow → slide id).
 $subid = optional_param('slideid', 0, PARAM_INT) ?: null;
 $cm = get_coursemodule_from_id('', $cmid);
+require_course_login($cm->course, true, $cm);
 $context = context_module::instance($cm->id);
 \local_dixeo_editor\local\editor_capability::require_edit_module($context);
 

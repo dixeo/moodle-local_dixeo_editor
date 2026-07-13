@@ -16,8 +16,6 @@
 
 namespace local_dixeo_editor\local;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Module-context capability checks for Dixeo editor operations.
  *

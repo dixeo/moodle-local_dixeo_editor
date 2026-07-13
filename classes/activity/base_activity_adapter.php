@@ -1,4 +1,19 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
 /**
  * Abstract base class for activity content adapters.
  *
@@ -34,12 +49,19 @@ abstract class base_activity_adapter implements activity_adapter_interface {
     /** @var stdClass The DB record for this activity instance (or sub-row). */
     protected stdClass $record;
 
-    /** @var context_module */
+    /** @var context_module Module context. */
     protected context_module $context;
 
-    /** @var moodle_database */
+    /** @var moodle_database Database handle. */
     protected moodle_database $db;
 
+    /**
+     * Constructor.
+     *
+     * @param int $recordid Target DB row id.
+     * @param context_module $context Module context.
+     * @param moodle_database $db Database handle.
+     */
     public function __construct(int $recordid, context_module $context, moodle_database $db) {
         $this->db = $db;
         $this->context = $context;
@@ -52,22 +74,46 @@ abstract class base_activity_adapter implements activity_adapter_interface {
      *
      * Simple modules (page, label) return $cm->instance and ignore $subid.
      * Composite modules (slideshow) validate $subid and return it.
+     *
+     * @param stdClass $cm Course module record.
+     * @param int|null $subid Optional child record ID for composite modules.
+     * @return int
      */
     abstract public static function resolve_record_id(stdClass $cm, ?int $subid): int;
 
-    /** Return the module name (e.g., 'page', 'label', 'slideshow'). */
+    /**
+     * Return the module name (e.g., 'page', 'label', 'slideshow').
+     *
+     * @return string
+     */
     abstract protected function get_module_name(): string;
 
-    /** Return the DB column name for the content field. */
+    /**
+     * Return the DB column name for the content field.
+     *
+     * @return string
+     */
     abstract public function get_content_field(): string;
 
-    /** Return the DB column name for the format field. */
+    /**
+     * Return the DB column name for the format field.
+     *
+     * @return string
+     */
     abstract protected function get_format_field(): string;
 
-    /** Return the file area name used for file storage. */
+    /**
+     * Return the file area name used for file storage.
+     *
+     * @return string
+     */
     abstract protected function get_file_area(): string;
 
-    /** Return the DB table name for this activity type (or sub-table). */
+    /**
+     * Return the DB table name for this activity type (or sub-table).
+     *
+     * @return string
+     */
     abstract protected function get_table_name(): string;
 
     /**
@@ -75,6 +121,8 @@ abstract class base_activity_adapter implements activity_adapter_interface {
      *
      * Default 0 (page/label). Composite modules override to return the
      * sub-row id (e.g. slideshow stores files with itemid = slide id).
+     *
+     * @return int
      */
     protected function get_file_itemid(): int {
         return 0;
@@ -89,16 +137,33 @@ abstract class base_activity_adapter implements activity_adapter_interface {
     protected function after_save(): void {
     }
 
+    /**
+     * Return the main content to be edited.
+     *
+     * @return string
+     */
     public function get_content(): string {
         $field = $this->get_content_field();
         return (string) $this->record->{$field};
     }
 
+    /**
+     * Return the content format (HTML, etc.).
+     *
+     * @return int
+     */
     public function get_content_format(): int {
         $field = $this->get_format_field();
         return (int) $this->record->{$field};
     }
 
+    /**
+     * Prepare the content for editing in draft mode.
+     *
+     * @param int $draftitemid Draft file area item id.
+     * @param array $editoroptions Editor options.
+     * @return string The draft text.
+     */
     public function prepare_draft_area(int $draftitemid, array $editoroptions): string {
         $contentfield = $this->get_content_field();
 
@@ -113,6 +178,14 @@ abstract class base_activity_adapter implements activity_adapter_interface {
         );
     }
 
+    /**
+     * Save the edited content.
+     *
+     * @param string $content Content text.
+     * @param int $format Content format.
+     * @param int $itemid Draft item id.
+     * @param array $editoroptions Editor options.
+     */
     public function save_content(string $content, int $format, int $itemid, array $editoroptions): void {
         $contentfield = $this->get_content_field();
         $formatfield = $this->get_format_field();

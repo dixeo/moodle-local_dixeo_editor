@@ -33,8 +33,13 @@ use local_dixeo\external\service_factory;
 use local_dixeo_editor\activity\activity_adapter_factory;
 use local_dixeo_editor\local\editor_capability;
 
+/**
+ * External API to poll module content regeneration job status.
+ */
 class get_regenerate_module_content_status extends external_api {
     /**
+     * Define parameters for the web service.
+     *
      * @return external_function_parameters
      */
     public static function execute_parameters(): external_function_parameters {
@@ -51,9 +56,11 @@ class get_regenerate_module_content_status extends external_api {
     }
 
     /**
-     * @param int $cmid
-     * @param string $jobid
-     * @param int $slideid
+     * Get the status of a module content regeneration job.
+     *
+     * @param int $cmid Course module ID.
+     * @param string $jobid Job id.
+     * @param int $slideid Slide row ID (slideshow only, 0 otherwise).
      * @return array
      */
     public static function execute(int $cmid, string $jobid, int $slideid = 0): array {
@@ -104,8 +111,10 @@ class get_regenerate_module_content_status extends external_api {
     }
 
     /**
-     * @param string $status
-     * @param string|null $errorcode
+     * Normalize failed job status when cancellation is reported via error code.
+     *
+     * @param string $status Raw job status.
+     * @param string|null $errorcode Optional error code from the API.
      * @return string
      */
     private static function normalize_status(string $status, ?string $errorcode): string {
@@ -119,6 +128,8 @@ class get_regenerate_module_content_status extends external_api {
     }
 
     /**
+     * Define return values for the web service.
+     *
      * @return external_single_structure
      */
     public static function execute_returns(): external_single_structure {

@@ -1,5 +1,4 @@
 <?php
-
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -36,6 +35,7 @@ $subid = optional_param('slideid', 0, PARAM_INT) ?: null;
 
 // Retrieve the course module record using Moodle API.
 $cm = get_coursemodule_from_id('', $cmid);
+require_course_login($cm->course, true, $cm);
 $modname = $cm->modname;
 $context = context_module::instance($cm->id);
 \local_dixeo_editor\local\editor_capability::require_edit_module($context);
@@ -52,7 +52,7 @@ $PAGE->add_body_class('limitedwidth');
 $factory = new \local_dixeo_editor\activity\activity_adapter_factory($DB);
 $activityadapter = $factory->create($cmid, $subid);
 
-// Get editor options
+// Get editor options.
 $editoroptions = page_get_editor_options($context);
 
 // Set the editor field name.
