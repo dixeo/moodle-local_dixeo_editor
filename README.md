@@ -4,7 +4,7 @@ This local plugin provides AI-assisted editing for Moodle's _Page_ and _Text & M
 
 ## Features
 
-- **AI-Assisted Content Generation and Updating**: Dixeo generates or modifies module content based on your natural lanuage instructions.
+- **AI-Assisted Text Generation and Editing**: Dixeo generates or modifies module content based on your natural lanuage instructions.
 - **Integration With TinyMCE**: The plugin integrates with the standard TinyMCE editor, extending it with an AI prompt area.
 - **Quick Prompts**: Supports pre-programmed prompts to translate, enrich, or prettify content with a single click.
 - **Success Notification**: Displays a custom success box upon completion of content update.
@@ -14,36 +14,27 @@ This local plugin provides AI-assisted editing for Moodle's _Page_ and _Text & M
 
 - **Moodle**: 4.3 (or above; should be compatible with 4.1+).
 - **TinyMCE**: Must be configured as the default Moodle text editor.
-- **local_dixeo**: The Dixeo AI core plugin and a valid Dixeo API key.
+- **Dixeo AI (local_dixeo)**: The Dixeo AI core plugin and a valid Dixeo API key.
 
 ## Installation
 
 1. Copy `dixeo_editor` to `/local/dixeo_editor/`
 2. Visit Site Administration > Notifications
+3. Complete the Moodle upgrade.
 
 ## Configuration
 
 - The plugin does not require additional configuration.
-- Usage requires the user to have **local/dixeo:edit** and **moodle/course:manageactivities** in the module context. 
+- Users must have the capabilities **local/dixeo:edit** and **moodle/course:manageactivities** in the course (or module) context. 
 
 ## Usage
 
 1. Navigate to a **Page**, **Text & Media** or **Slideshow** activity in a course.
-2. In the activity/contextual menu, click on **Dixeo Editor** to open the AI editing interface.
-3. Enter your prompt or select a quick-prompt from the AI editing area below the TinyMCE window.
+2. In the activity menu (or contextual menu on the course page), click on **Dixeo Editor** to open the AI editing interface.
+3. Enter your prompt or select a quick-prompt from the AI editing area situated below the TinyMCE window.
 4. Press the Dixeo logo to update your content with AI.
-5. Save the changes and exit the editor by clicking **OK** (or **X** to discard changes).
-
-## Integration with Dixeo
-
-This plugin uses the `local_dixeo_regenerate_module_content` web service to edit content. The service:
-- Analyzes current module content
-- Applies user instructions via AI
-- Uses course context for consistency
-- Leverages vector stores if course has synchronized files
-- Returns validated, formatted content ready for display
-
-The integration is implemented through Moodle's standard Ajax API, ensuring secure and efficient communication between the editor interface and the Dixeo AI backend.
+5. Undo/redo changes from TinyMCE.
+6. Save the changes and exit the editor by clicking **OK** (or press **X** to discard changes).
 
 ## License
 
