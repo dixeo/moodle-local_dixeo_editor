@@ -46,6 +46,7 @@ $string['dixeo_editor:editpage'] = 'Permite a un usuario acceder a funcionalidad
 $string['editcontent'] = 'Editor de Contenido IA';
 $string['enrich'] = 'Enriquecer';
 $string['enrichprompt'] = 'Mejora el contenido con fines educativos añadiendo explicaciones detalladas, ejemplos relevantes y contexto para hacer que el material sea más completo y atractivo para los estudiantes. Asegúrate de que sea claro, preciso y con un tono accesible para una audiencia diversa';
+$string['error:generic'] = 'Se produjo un error inesperado. Inténtalo de nuevo.';
 $string['generate'] = 'Generar';
 $string['generating'] = 'Generando...';
 $string['length_expand'] = 'Ampliar';

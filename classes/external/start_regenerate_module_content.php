@@ -34,6 +34,7 @@ use local_dixeo\context\context_builder_factory;
 use local_dixeo\external\service_factory;
 use local_dixeo\service\tiny_autosave_draft_service;
 use local_dixeo_editor\local\editor_capability;
+use local_dixeo_editor\local\external_error;
 
 /**
  * External API to start an asynchronous module content regeneration job.
@@ -151,10 +152,7 @@ class start_regenerate_module_content extends external_api {
                 ],
             ];
         } catch (\Throwable $e) {
-            return [
-                'success' => false,
-                'error' => ['message' => $e->getMessage()],
-            ];
+            return external_error::response($e);
         }
     }
 

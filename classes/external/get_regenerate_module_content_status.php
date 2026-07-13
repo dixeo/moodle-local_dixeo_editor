@@ -32,6 +32,7 @@ use core_external\external_value;
 use local_dixeo\external\service_factory;
 use local_dixeo_editor\activity\activity_adapter_factory;
 use local_dixeo_editor\local\editor_capability;
+use local_dixeo_editor\local\external_error;
 
 /**
  * External API to poll module content regeneration job status.
@@ -103,10 +104,7 @@ class get_regenerate_module_content_status extends external_api {
                 'data' => $data,
             ];
         } catch (\Throwable $e) {
-            return [
-                'success' => false,
-                'error' => ['message' => $e->getMessage()],
-            ];
+            return external_error::response($e);
         }
     }
 

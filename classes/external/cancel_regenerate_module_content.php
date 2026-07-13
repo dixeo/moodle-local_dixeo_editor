@@ -31,6 +31,7 @@ use core_external\external_single_structure;
 use core_external\external_value;
 use local_dixeo\external\service_factory;
 use local_dixeo_editor\local\editor_capability;
+use local_dixeo_editor\local\external_error;
 
 /**
  * External API to cancel an asynchronous module regeneration job.
@@ -76,10 +77,7 @@ class cancel_regenerate_module_content extends external_api {
                 ],
             ];
         } catch (\Throwable $e) {
-            return [
-                'success' => false,
-                'error' => ['message' => $e->getMessage()],
-            ];
+            return external_error::response($e);
         }
     }
 

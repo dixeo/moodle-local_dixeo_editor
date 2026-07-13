@@ -46,6 +46,7 @@ $string['dixeo_editor:editpage'] = 'Ermöglicht Nutzer/innen den Zugriff auf KI-
 $string['editcontent'] = 'Dixeo-KI-Editor';
 $string['enrich'] = 'Anreichern';
 $string['enrichprompt'] = 'Reichert den Inhalt zu Bildungszwecken durch detaillierte Erklärungen, relevante Beispiele und Kontext an, um das Material umfassender und ansprechender zu gestalten. Stellt Klarheit, Genauigkeit und einen zugänglichen Ton für ein vielfältiges Publikum sicher';
+$string['error:generic'] = 'Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es erneut.';
 $string['generate'] = 'Generieren';
 $string['generating'] = 'Wird generiert...';
 $string['length_expand'] = 'Erweitern';
