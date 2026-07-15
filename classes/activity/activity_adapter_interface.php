@@ -1,5 +1,4 @@
 <?php
-
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -28,50 +27,58 @@ namespace local_dixeo_editor\activity;
 
 use moodle_url;
 
+/**
+ * Interface for activity-specific content adapters.
+ */
 interface activity_adapter_interface {
-
     /**
      * Return the DB/API field name used for content (e.g. 'content', 'intro').
+     *
      * Used when extracting generated content from operation results by module type.
+     *
+     * @return string
      */
     public function get_content_field(): string;
 
     /**
      * Return the main content to be edited.
+     *
+     * @return string
      */
     public function get_content(): string;
 
     /**
      * Return the content format (HTML, etc.).
+     *
+     * @return int
      */
     public function get_content_format(): int;
 
     /**
      * Prepare the content for editing in draft mode.
      *
-     * @param int   $draftitemid
-     * @param array $editoroptions
-     * @return string The draft text
+     * @param int $draftitemid Draft file area item id.
+     * @param array $editoroptions Editor options.
+     * @return string The draft text.
      */
     public function prepare_draft_area(int $draftitemid, array $editoroptions): string;
 
     /**
      * Save the edited content.
      *
-     * @param string $content
-     * @param int    $format
-     * @param int    $itemid
-     * @param array  $editoroptions
+     * @param string $content Content text.
+     * @param int $format Content format.
+     * @param int $itemid Draft item id.
+     * @param array $editoroptions Editor options.
      */
     public function save_content(string $content, int $format, int $itemid, array $editoroptions): void;
 
     /**
      * Return the URL where the user should be redirected after saving/cancelling.
      *
-     * @param int $courseid
-     * @param int $cmid
+     * @param int $courseid Course id.
+     * @param int $cmid Course module id.
      * @return moodle_url
      */
     public function get_redirect_url(int $courseid, int $cmid): moodle_url;
 }
-

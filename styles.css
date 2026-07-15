@@ -1,3 +1,4 @@
+/* stylelint-disable declaration-no-important -- Editor layout overrides theme chrome. */
 /* content_edition */
 #page-local-dixeo_editor-content_edition #page-footer {
     display: none;
@@ -74,7 +75,7 @@
 /* TinyMCE */
 #page-local-dixeo_editor-content_edition #content_editor #fitem_id_modulecontent {
     flex-grow: 1;
-    margin-bottom: 0px !important;
+    margin-bottom: 0 !important;
 }
 
 #page-local-dixeo_editor-content_edition #content_editor #fitem_id_modulecontent .felement {
@@ -437,8 +438,12 @@ body#page-local-dixeo_editor-content.dixeo-editor-resizing {
 
 body#page-local-dixeo_editor-content.dixeo-editor-resizing-active #dixeo_editor_panel iframe,
 body#page-local-dixeo_editor-content.dixeo-editor-resizing-active #dixeo_editor_panel .tox,
-body#page-local-dixeo_editor-content.dixeo-editor-resizing-active #dixeo_editor_panel .dixeo-editor-panel-body > *:not(.dixeo-editor-resize-handle) {
+body#page-local-dixeo_editor-content.dixeo-editor-resizing-active #dixeo_editor_panel .dixeo-editor-panel-body > * {
     pointer-events: none;
+}
+
+body#page-local-dixeo_editor-content.dixeo-editor-resizing-active #dixeo_editor_panel .dixeo-editor-resize-handle {
+    pointer-events: auto;
 }
 
 #page-local-dixeo_editor-content .dixeo-editor-resize-handle {

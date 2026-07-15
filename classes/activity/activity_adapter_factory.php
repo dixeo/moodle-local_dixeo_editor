@@ -1,5 +1,4 @@
 <?php
-
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -29,6 +28,9 @@ namespace local_dixeo_editor\activity;
 use context_module;
 use moodle_database;
 
+/**
+ * Factory for creating activity-specific content adapters.
+ */
 class activity_adapter_factory {
     /** @var array<string, class-string<base_activity_adapter>> Registered adapter classes by module name. */
     private static array $adapters = [
@@ -37,8 +39,14 @@ class activity_adapter_factory {
         'slideshow' => slideshow_slide_activity_adapter::class,
     ];
 
+    /** @var moodle_database Database handle. */
     private moodle_database $db;
 
+    /**
+     * Constructor.
+     *
+     * @param moodle_database $db Database handle.
+     */
     public function __construct(moodle_database $db) {
         $this->db = $db;
     }
@@ -47,14 +55,16 @@ class activity_adapter_factory {
      * Register an adapter class for a module type.
      *
      * @param string $modname The module name.
-     * @param class-string<base_activity_adapter> $classname
+     * @param string $classname Adapter class name (must extend base_activity_adapter).
      */
     public static function register_adapter(string $modname, string $classname): void {
         self::$adapters[$modname] = $classname;
     }
 
     /**
-     * @return array<int, string> List of supported module names.
+     * Return list of supported module names.
+     *
+     * @return array<int, string>
      */
     public static function get_supported_types(): array {
         return array_keys(self::$adapters);
@@ -86,6 +96,10 @@ class activity_adapter_factory {
         }
 
         $recordid = $classname::resolve_record_id($cm, $subid);
+
+        if ($cm->modname === 'slideshow') {
+            slideshow_slide_activity_adapter::assert_belongs_to_cm($cm, $recordid);
+        }
 
         return new $classname($recordid, $context, $this->db);
     }

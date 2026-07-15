@@ -1,60 +1,67 @@
-# AI Course Editor - Moodle Plugin
+# Dixeo AI Editor — Moodle Plugin
 
-**Plugin Name:** `local_dixeo_course_editor`  
-**Description:** This local plugin provides AI-driven editing functionality for Moodle's _Page_ activity. It adds an "Edit (AI)" tab in the page-mod editing navbar and opens an AI-powered editing interface where users can generate or refine content directly in TinyMCE.
+**Plugin component:** `local_dixeo_editor`  
+**Description:** Local plugin that adds AI-assisted content editing for supported Moodle activities (page, label, slideshow). It provides an editing UI with TinyMCE integration and calls Dixeo web services to regenerate or refine module content.
 
 ---
 
 ## Features
 
-- **AI-Powered Content Generation**: Enter prompts, instructions, or transformations and let the AI generate or improve the content in your Page activity.
-- **Supports Beta "Tag" Buttons**: Quick prompts to translate, enrich, or prettify content with a single click.
-- **Integration With TinyMCE**: The plugin detects the TinyMCE editor iframe and updates content on-the-fly.
-- **Success Notification**: Displays a custom success box upon completion of content update.
-- **Cancel/Save Flow**: "Cancel" reverts to original page, "OK" finalizes changes in the standard Moodle form workflow.
+- **AI-powered content editing** for page, label, and slideshow activities.
+- **Quick-prompt toolbar** for common transformations (translate, enrich, prettify, tone, structure, and more).
+- **TinyMCE integration** with optional Tiny autosave draft support during async regeneration.
+- **Sync and async flows** via the plugin's AJAX web services.
 
 ---
 
 ## Requirements
 
-- **Moodle**: 4.3 (or above; should be compatible with 4.1+).
-- **TinyMCE**: Must be configured as the default editor for this plugin to work.
-- **local_dixeo**: The Dixeo AI plugin that provides AI content generation services (required by `$plugin->dependencies`).
+- **Moodle:** 4.1+ (see `version.php` for the exact `$plugin->requires` value).
+- **TinyMCE:** Required for the in-browser editing experience.
+- **local_dixeo:** Required dependency (`$plugin->dependencies`); provides API access, job handling, and the `local/dixeo:edit` capability.
+
+---
+
+## Capabilities
+
+Editor access is enforced at runtime by `editor_capability`, which requires **both**:
+
+- `moodle/course:manageactivities`
+- `local/dixeo:edit` (defined in `local_dixeo`)
+
+The editor plugin does not define its own `db/access.php`; capability management stays in `local_dixeo`.
+
+---
+
+## Web services
+
+Registered in `db/services.php` (all require the capabilities above):
+
+| Function | Purpose |
+|---|---|
+| `local_dixeo_editor_regenerate_module_content` | Synchronous content regeneration |
+| `local_dixeo_editor_start_regenerate_module_content` | Start async regeneration job |
+| `local_dixeo_editor_get_regenerate_module_content_status` | Poll async job status |
+| `local_dixeo_editor_cancel_regenerate_module_content` | Cancel async job |
 
 ---
 
 ## Usage
 
-1. Navigate to a **Page activity** in a course.
-2. In the activity navigation tabs, you should see an additional **Edit (AI)** tab.
-3. Click it to open the AI editing interface.
-4. Type or select a quick-prompt in the bottom `Instructions` textarea.
-5. Press **Generate** to get updated content from the AI.
-6. Check the updated text in the editor; finalize by clicking **OK** (which saves the page form) or **Quit edit mode** to discard.
+1. Open a supported activity (page, label, or slideshow slide) in a course where you have editor capabilities.
+2. Use the Dixeo editor entry point (activity menu / edit tab, depending on module).
+3. Enter instructions or choose a quick prompt, then generate content.
+4. Review the result in TinyMCE and save through the normal Moodle activity workflow.
 
 ---
 
 ## Integration with Dixeo
 
-This plugin uses the `local_dixeo_regenerate_module_content` web service to edit content. The service:
-- Analyzes current module content
-- Applies user instructions via AI
-- Uses course context for consistency
-- Leverages vector stores if course has files uploaded
-- Returns validated, formatted content ready for display
-
-The integration is implemented through Moodle's standard Ajax API, ensuring secure and efficient communication between the editor interface and the Dixeo AI backend.
+Content editing is delegated to `local_dixeo` services. The editor externals build activity context (including slideshow slide ownership checks) and submit jobs to the Dixeo API (`/v1/modules/edit`). The plugin does not persist AI payloads in its own database tables.
 
 ---
 
 ## Customization
 
-- **Adding New AI Buttons**:
-    - Edit `templates/mod_content_editor.mustache` to create more `.ai-tag-button` elements with different prompts.
-    - The logic in `mod_page_form.js` automatically detects them.
-- **Custom Capabilities**:
-    - Create a `db/access.php` file if you want roles to specifically control who can use the AI editing mode, and replace references to `moodle/course:manageactivities` in `lib.php` and `content_edition.php`.
-
----
-
-Documentation generated by AI, reviewed and modified by human.
+- **UI / prompts:** Templates and AMD modules under `templates/` and `amd/src/`.
+- **New activity types:** Register adapters via `activity_adapter_factory::register_adapter()`.

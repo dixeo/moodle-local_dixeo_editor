@@ -1,5 +1,4 @@
 <?php
-
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -37,11 +36,20 @@ if (isset($PAGE) && strpos($PAGE->pagetype, 'course-view') === 0 && $PAGE->user_
     $PAGE->requires->js_call_amd('local_dixeo_editor/action_menu_edit', 'init');
 }
 
+/**
+ * Extend course navigation with Dixeo editor hooks when editing a page activity.
+ *
+ * @param navigation_node $navigation Navigation node.
+ * @param stdClass $course Course record.
+ * @param context $context Course context.
+ */
 function local_dixeo_editor_extend_navigation_course(navigation_node $navigation, stdClass $course, context $context) {
     global $PAGE;
 
-    if ($PAGE->cm !== null && $PAGE->cm->modname === 'page'
-            && editor_capability::can_edit_module($PAGE->cm->context)) {
+    if (
+        $PAGE->cm !== null && $PAGE->cm->modname === 'page'
+        && editor_capability::can_edit_module($PAGE->cm->context)
+    ) {
         // Call init js script.
         $url = new moodle_url(LOCAL_DIXEO_EDITOR_CONTENT_EDIT_PATH, ['cmid' => $PAGE->cm->id]);
         $PAGE->requires->js_call_amd('local_dixeo_editor/display_edit', 'init', [
@@ -51,6 +59,12 @@ function local_dixeo_editor_extend_navigation_course(navigation_node $navigation
     }
 }
 
+/**
+ * Add an edit-content button to the page context header.
+ *
+ * @param \moodle_page $page Current page.
+ * @return string HTML for the edit button, or empty string.
+ */
 function local_dixeo_editor_add_button_to_context_header($page) {
     global $OUTPUT;
 
@@ -76,7 +90,7 @@ function local_dixeo_editor_add_button_to_context_header($page) {
             [
                 'style' => 'padding: 10px 12px;',
                 'class' => 'btn btn-secondary edit-button',
-                'title' => $editstring
+                'title' => $editstring,
             ]
         );
     }
@@ -112,9 +126,9 @@ function local_dixeo_editor_add_button_to_activity_menu($page) {
     $text = get_string('editcontent', 'local_dixeo_editor');
 
     $actions[] = [
-        'url' => new moodle_url(LOCAL_DIXEO_EDITOR_CONTENT_EDIT_PATH, array('cmid' => $page->cm->id)),
+        'url' => new moodle_url(LOCAL_DIXEO_EDITOR_CONTENT_EDIT_PATH, ['cmid' => $page->cm->id]),
         'icon' => $OUTPUT->pix_icon('t/editstring', $text, 'core', ['class' => 'icon']),
-        'params' => ['class' => 'btn btn-secondary edit-button', 'title' => $text, 'style' => 'padding: 13px 15px;']
+        'params' => ['class' => 'btn btn-secondary edit-button', 'title' => $text, 'style' => 'padding: 13px 15px;'],
     ];
 
     return $actions;

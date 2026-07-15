@@ -30,6 +30,34 @@ define([
         editorRedoButton: 'button[data-mce-name="redo"]'
     };
 
+    /**
+     * Build Ajax args for start_regenerate_module_content, including optional Tiny autosave keys.
+     *
+     * Web service parameter names use autosave_* prefixes; build keys via concatenation so
+     * callers stay camelCase-clean for ESLint.
+     *
+     * @param {number} cmid
+     * @param {string} instructions
+     * @param {number} slideid
+     * @param {Object|null} autosaveKeys
+     * @returns {Object}
+     */
+    function buildStartRegenerateArgs(cmid, instructions, slideid, autosaveKeys) {
+        var args = {
+            cmid: cmid,
+            instructions: instructions,
+            slideid: slideid
+        };
+        if (!autosaveKeys || !autosaveKeys.contextid || !autosaveKeys.pagehash || !autosaveKeys.elementid) {
+            return args;
+        }
+        var autosaveFieldPrefix = 'autosave_';
+        args[autosaveFieldPrefix + 'contextid'] = autosaveKeys.contextid;
+        args[autosaveFieldPrefix + 'pagehash'] = autosaveKeys.pagehash;
+        args[autosaveFieldPrefix + 'elementid'] = autosaveKeys.elementid;
+        return args;
+    }
+
     var Editor = {
         cmid: 0,
         slideid: 0,
@@ -55,6 +83,7 @@ define([
                 Editor.setupUi();
                 Editor.bindEditorUndoRedoBridge();
                 Editor.injectThemeStylesIntoEditor();
+                return undefined;
             }).catch(function(error) {
                 Notification.exception(error);
             });
@@ -130,13 +159,17 @@ define([
                 {key: 'generate', component: 'local_dixeo_editor'},
                 {key: 'generating', component: 'local_dixeo_editor'},
                 {key: 'cancelmodeconfirm', component: 'local_dixeo_editor'},
-                {key: 'unexpectederror', component: 'local_dixeo_editor'}
+                {key: 'unexpectederror', component: 'local_dixeo_editor'},
+                {key: 'yes', component: 'moodle'},
+                {key: 'no', component: 'moodle'}
             ]).then(function(values) {
                 return {
                     generate: values[0],
                     generating: values[1],
                     cancelModeConfirm: values[2],
-                    unexpectedError: values[3]
+                    unexpectedError: values[3],
+                    yes: values[4],
+                    no: values[5]
                 };
             });
         },
@@ -195,6 +228,16 @@ define([
                 self.startGeneration();
             });
 
+            if (this.dom.saveButton) {
+                this.dom.saveButton.addEventListener('click', function(event) {
+                    if (self.activeJobId) {
+                        event.preventDefault();
+                        return;
+                    }
+                    self.submitModEditorForm();
+                });
+            }
+
             this.dom.undoButton.addEventListener('click', function() {
                 self.clickEditorToolbarButton(self.editorUndoButton);
             });
@@ -208,10 +251,18 @@ define([
                     return;
                 }
                 event.preventDefault();
-                var shouldLeave = window.confirm(self.strings.cancelModeConfirm);
-                if (shouldLeave) {
-                    window.location.href = self.dom.pageCancelButton.href;
-                }
+                Notification.confirm(
+                    '',
+                    self.strings.cancelModeConfirm,
+                    self.strings.yes,
+                    self.strings.no,
+                    function() {
+                        window.location.href = self.dom.pageCancelButton.href;
+                    },
+                    function() {
+                        return undefined;
+                    }
+                );
             });
 
             this.dom.panelCloseButton.addEventListener('click', function() {
@@ -433,6 +484,18 @@ define([
             });
         },
 
+        submitModEditorForm: function() {
+            var form = document.getElementById('mod_editor_form');
+            if (!form) {
+                return;
+            }
+            if (typeof form.requestSubmit === 'function') {
+                form.requestSubmit();
+            } else {
+                form.submit();
+            }
+        },
+
         startGeneration: function() {
             var self = this;
             var instructions = (this.dom.promptTextarea.value || '').trim();
@@ -456,9 +519,9 @@ define([
             if (editor && typeof AutosaveRepository.updateAutosaveSession === 'function') {
                 flushPromise = AutosaveRepository.updateAutosaveSession(editor).then(function() {
                     return {
-                        autosave_contextid: AutosaveOptions.getContextId(editor),
-                        autosave_pagehash: AutosaveOptions.getPageHash(editor),
-                        autosave_elementid: editor.targetElm.id
+                        contextid: AutosaveOptions.getContextId(editor),
+                        pagehash: AutosaveOptions.getPageHash(editor),
+                        elementid: editor.targetElm.id
                     };
                 }).catch(function() {
                     return null;
@@ -469,42 +532,32 @@ define([
                 if (token !== self.generationToken) {
                     return null;
                 }
-                var args = {
-                    cmid: self.cmid,
-                    instructions: instructions,
-                    slideid: self.slideid
-                };
-                if (autosaveKeys &&
-                    autosaveKeys.autosave_contextid &&
-                    autosaveKeys.autosave_pagehash &&
-                    autosaveKeys.autosave_elementid) {
-                    args.autosave_contextid = autosaveKeys.autosave_contextid;
-                    args.autosave_pagehash = autosaveKeys.autosave_pagehash;
-                    args.autosave_elementid = autosaveKeys.autosave_elementid;
-                }
+                var args = buildStartRegenerateArgs(self.cmid, instructions, self.slideid, autosaveKeys);
                 return Ajax.call([{
                     methodname: 'local_dixeo_editor_start_regenerate_module_content',
                     args: args
                 }])[0];
             }).then(function(response) {
                 if (token !== self.generationToken || response === null) {
-                    return;
+                    return undefined;
                 }
                 if (!response.success || !response.data || !response.data.jobid) {
-                    throw new Error(
-                        response.error && response.error.message
-                            ? response.error.message
-                            : self.strings.unexpectedError
-                    );
+                    var startError = self.strings.unexpectedError;
+                    if (response.error && response.error.message) {
+                        startError = response.error.message;
+                    }
+                    throw new Error(startError);
                 }
                 self.activeJobId = response.data.jobid;
                 self.pollJob(token);
+                return undefined;
             }).catch(function(error) {
                 if (token !== self.generationToken) {
-                    return;
+                    return undefined;
                 }
                 self.unlockAfterGeneration();
                 Notification.exception(error);
+                return undefined;
             });
         },
 
@@ -523,14 +576,14 @@ define([
                 }
             }])[0].then(function(response) {
                 if (token !== self.generationToken) {
-                    return;
+                    return undefined;
                 }
                 if (!response.success) {
-                    throw new Error(
-                        response.error && response.error.message
-                            ? response.error.message
-                            : self.strings.unexpectedError
-                    );
+                    var statusError = self.strings.unexpectedError;
+                    if (response.error && response.error.message) {
+                        statusError = response.error.message;
+                    }
+                    throw new Error(statusError);
                 }
 
                 var status = response.data.status;
@@ -540,28 +593,37 @@ define([
                     self.unlockAfterGeneration();
                     self.showSuccess();
                     self.dom.promptTextarea.value = '';
-                    return;
+                    return undefined;
                 }
 
-                if (status === 'failed' || status === 'cancelled') {
+                if (status === 'cancelled') {
                     self.activeJobId = null;
                     self.unlockAfterGeneration();
-                    if (status === 'cancelled') {
-                        return;
+                    return undefined;
+                }
+
+                if (status === 'failed') {
+                    self.activeJobId = null;
+                    self.unlockAfterGeneration();
+                    var failedError = response.data.errormessage;
+                    if (!failedError) {
+                        failedError = self.strings.unexpectedError;
                     }
-                    throw new Error(response.data.errormessage || self.strings.unexpectedError);
+                    throw new Error(failedError);
                 }
 
                 self.pollingTimer = window.setTimeout(function() {
                     self.pollJob(token);
                 }, 1500);
+                return undefined;
             }).catch(function(error) {
                 if (token !== self.generationToken) {
-                    return;
+                    return undefined;
                 }
                 self.activeJobId = null;
                 self.unlockAfterGeneration();
                 Notification.exception(error);
+                return undefined;
             });
         },
 
@@ -591,10 +653,12 @@ define([
             }])[0].then(function() {
                 self.activeJobId = null;
                 self.unlockAfterGeneration();
+                return undefined;
             }).catch(function() {
                 // Fallback behavior requested: ignore late response and return UI to normal.
                 self.activeJobId = null;
                 self.unlockAfterGeneration();
+                return undefined;
             });
         },
 
@@ -635,6 +699,7 @@ define([
                         }
                     }, 300);
                 }, 5000);
+                return undefined;
             }).catch(function(error) {
                 Notification.exception(error);
             });

@@ -1,5 +1,4 @@
 <?php
-
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -26,9 +25,17 @@
 
 namespace local_dixeo_editor\form;
 
-require_once($CFG->libdir . '/formslib.php');
+defined('MOODLE_INTERNAL') || die();
 
+require_once($CFG->dirroot . '/lib/formslib.php');
+
+/**
+ * Moodle form for the Dixeo AI content editor.
+ */
 class mod_editor_form extends \moodleform {
+    /**
+     * Define form fields.
+     */
     protected function definition() {
         $mform = $this->_form;
         $editoroptions = $this->_customdata['editoroptions'];

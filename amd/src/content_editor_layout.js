@@ -210,6 +210,66 @@ define(['core_user/repository'], function(Repository) {
     };
 
     /**
+     * Clamp width/height only for a closed panel without saved x/y coordinates.
+     *
+     * @param {HTMLElement} panel
+     * @param {number} effMinW
+     * @param {number} effMinH
+     * @param {number} maxW
+     * @param {number} maxH
+     * @returns {boolean} True when handled.
+     */
+    Layout.prototype.clampClosedSizeOnlyFloatPanel = function(panel, effMinW, effMinH, maxW, maxH) {
+        var sw = this.state.w || DEFAULTS.w;
+        var sh = this.state.h || DEFAULTS.h;
+        var wOnly = Math.max(effMinW, Math.min(sw, maxW));
+        var hOnly = Math.max(effMinH, Math.min(sh, maxH));
+        if (wOnly === sw && hOnly === sh) {
+            return true;
+        }
+        this.state.w = wOnly;
+        this.state.h = hOnly;
+        panel.style.width = wOnly + 'px';
+        panel.style.height = hOnly + 'px';
+        this.scheduleSave();
+        return true;
+    };
+
+    /**
+     * Compute clamped float panel geometry inside the viewport.
+     *
+     * @param {number} w
+     * @param {number} h
+     * @param {number} left
+     * @param {number} top
+     * @param {number} vw
+     * @param {number} vh
+     * @param {number} m
+     * @param {number} effMinW
+     * @param {number} effMinH
+     * @param {number} maxW
+     * @param {number} maxH
+     * @returns {{w2: number, h2: number, left2: number, top2: number}}
+     */
+    Layout.prototype.computeClampedFloatPosition = function(w, h, left, top, vw, vh, m, effMinW, effMinH, maxW, maxH) {
+        var w2 = Math.max(effMinW, Math.min(w, maxW));
+        var h2 = Math.max(effMinH, Math.min(h, maxH));
+        var left2;
+        var top2;
+        if (vw - w2 <= m * 2) {
+            left2 = Math.round((vw - w2) / 2);
+        } else {
+            left2 = Math.round(Math.min(Math.max(m, left), vw - w2 - m));
+        }
+        if (vh - h2 <= m * 2) {
+            top2 = Math.round((vh - h2) / 2);
+        } else {
+            top2 = Math.round(Math.min(Math.max(m, top), vh - h2 - m));
+        }
+        return {w2: w2, h2: h2, left2: left2, top2: top2};
+    };
+
+    /**
      * Keep the floating AI panel inside the window (position + size). Updates state when changed.
      * Applies inline styles whenever geometry changes so closed panels stay in sync for the next open.
      */
@@ -230,20 +290,8 @@ define(['core_user/repository'], function(Repository) {
         var hasSavedPosition = this.state.x !== null && this.state.x !== undefined &&
             this.state.y !== null && this.state.y !== undefined;
 
-        // CSS-anchored float (no saved x/y): only clamp width/height so prefs from a larger screen fit.
         if (closed && !hasSavedPosition) {
-            var sw = this.state.w || DEFAULTS.w;
-            var sh = this.state.h || DEFAULTS.h;
-            var wOnly = Math.max(effMinW, Math.min(sw, maxW));
-            var hOnly = Math.max(effMinH, Math.min(sh, maxH));
-            if (wOnly === sw && hOnly === sh) {
-                return;
-            }
-            this.state.w = wOnly;
-            this.state.h = hOnly;
-            p.style.width = wOnly + 'px';
-            p.style.height = hOnly + 'px';
-            this.scheduleSave();
+            this.clampClosedSizeOnlyFloatPanel(p, effMinW, effMinH, maxW, maxH);
             return;
         }
 
@@ -265,37 +313,23 @@ define(['core_user/repository'], function(Repository) {
             top = Math.round(this.state.y);
         }
 
-        var w2 = Math.max(effMinW, Math.min(w, maxW));
-        var h2 = Math.max(effMinH, Math.min(h, maxH));
-        var left2;
-        var top2;
-        if (vw - w2 <= m * 2) {
-            left2 = Math.round((vw - w2) / 2);
-        } else {
-            left2 = Math.round(Math.min(Math.max(m, left), vw - w2 - m));
-        }
-        if (vh - h2 <= m * 2) {
-            top2 = Math.round((vh - h2) / 2);
-        } else {
-            top2 = Math.round(Math.min(Math.max(m, top), vh - h2 - m));
-        }
-
-        if (w2 === w && h2 === h && left2 === left && top2 === top) {
+        var clamped = this.computeClampedFloatPosition(w, h, left, top, vw, vh, m, effMinW, effMinH, maxW, maxH);
+        if (clamped.w2 === w && clamped.h2 === h && clamped.left2 === left && clamped.top2 === top) {
             return;
         }
 
         p.style.position = 'fixed';
         p.style.right = 'auto';
         p.style.bottom = 'auto';
-        p.style.left = left2 + 'px';
-        p.style.top = top2 + 'px';
-        p.style.width = w2 + 'px';
-        p.style.height = h2 + 'px';
+        p.style.left = clamped.left2 + 'px';
+        p.style.top = clamped.top2 + 'px';
+        p.style.width = clamped.w2 + 'px';
+        p.style.height = clamped.h2 + 'px';
 
-        this.state.x = left2;
-        this.state.y = top2;
-        this.state.w = w2;
-        this.state.h = h2;
+        this.state.x = clamped.left2;
+        this.state.y = clamped.top2;
+        this.state.w = clamped.w2;
+        this.state.h = clamped.h2;
         this.scheduleSave();
     };
 

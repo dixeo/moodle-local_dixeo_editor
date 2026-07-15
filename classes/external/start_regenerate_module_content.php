@@ -34,9 +34,15 @@ use local_dixeo\context\context_builder_factory;
 use local_dixeo\external\service_factory;
 use local_dixeo\service\tiny_autosave_draft_service;
 use local_dixeo_editor\local\editor_capability;
+use local_dixeo_editor\local\external_error;
 
+/**
+ * External API to start an asynchronous module content regeneration job.
+ */
 class start_regenerate_module_content extends external_api {
     /**
+     * Define parameters for the web service.
+     *
      * @return external_function_parameters
      */
     public static function execute_parameters(): external_function_parameters {
@@ -71,20 +77,23 @@ class start_regenerate_module_content extends external_api {
     }
 
     /**
-     * @param int $cmid
-     * @param string $instructions
-     * @param int $autosave_contextid
-     * @param string $autosave_pagehash
-     * @param string $autosave_elementid
+     * Start a module content regeneration job.
+     *
+     * @param int $cmid Course module ID.
+     * @param string $instructions AI regeneration instructions.
+     * @param int $slideid Slide row ID (slideshow only, 0 otherwise).
+     * @param int $autosavecontextid Tiny autosave context id (0 = skip).
+     * @param string $autosavepagehash Tiny autosave page hash.
+     * @param string $autosaveelementid Tiny autosave target element id.
      * @return array
      */
     public static function execute(
         int $cmid,
         string $instructions,
         int $slideid = 0,
-        int $autosave_contextid = 0,
-        string $autosave_pagehash = '',
-        string $autosave_elementid = ''
+        int $autosavecontextid = 0,
+        string $autosavepagehash = '',
+        string $autosaveelementid = ''
     ): array {
         global $CFG, $USER;
 
@@ -92,9 +101,9 @@ class start_regenerate_module_content extends external_api {
             'cmid' => $cmid,
             'instructions' => $instructions,
             'slideid' => $slideid,
-            'autosave_contextid' => $autosave_contextid,
-            'autosave_pagehash' => $autosave_pagehash,
-            'autosave_elementid' => $autosave_elementid,
+            'autosave_contextid' => $autosavecontextid,
+            'autosave_pagehash' => $autosavepagehash,
+            'autosave_elementid' => $autosaveelementid,
         ]);
 
         $cm = get_coursemodule_from_id('', $params['cmid'], 0, false, MUST_EXIST);
@@ -143,10 +152,7 @@ class start_regenerate_module_content extends external_api {
                 ],
             ];
         } catch (\Throwable $e) {
-            return [
-                'success' => false,
-                'error' => ['message' => $e->getMessage()],
-            ];
+            return external_error::response($e);
         }
     }
 
@@ -199,6 +205,8 @@ class start_regenerate_module_content extends external_api {
     }
 
     /**
+     * Define return values for the web service.
+     *
      * @return external_single_structure
      */
     public static function execute_returns(): external_single_structure {

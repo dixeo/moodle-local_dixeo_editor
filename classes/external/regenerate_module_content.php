@@ -31,6 +31,7 @@ use core_external\external_single_structure;
 use core_external\external_value;
 use context_module;
 use local_dixeo_editor\local\editor_capability;
+use local_dixeo_editor\local\external_error;
 use local_dixeo\service\module_generation_service;
 use local_dixeo_editor\activity\activity_adapter_factory;
 
@@ -38,7 +39,6 @@ use local_dixeo_editor\activity\activity_adapter_factory;
  * Regenerate module content using AI via the Dixeo service.
  */
 class regenerate_module_content extends external_api {
-
     /**
      * Describe the parameters for the execute function.
      *
@@ -112,9 +112,13 @@ class regenerate_module_content extends external_api {
         // Handle failed vs pending (timeout) states.
         // IMPORTANT: Check is_failed() BEFORE is_pending() because failed results also have completed=false.
         if ($result->is_failed()) {
+            debugging(
+                'local_dixeo_editor external error: ' . ($result->get_error_message() ?? 'unknown'),
+                DEBUG_DEVELOPER
+            );
             return [
                 'success' => false,
-                'error' => ['message' => $result->get_error_message() ?? 'An unexpected error occurred'],
+                'error' => ['message' => external_error::generic_message()],
             ];
         }
 

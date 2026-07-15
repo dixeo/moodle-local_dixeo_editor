@@ -17,32 +17,36 @@
 namespace local_dixeo_editor\local;
 
 /**
- * Module-context capability checks for Dixeo editor operations.
+ * Sanitized error responses for AJAX externals.
  *
  * @package    local_dixeo_editor
  * @copyright  2026 Edunao SAS
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-final class editor_capability {
+final class external_error {
     /**
-     * Require manageactivities and local/dixeo:edit in the module context.
+     * Build a failure response with a generic client message.
      *
-     * @param \context_module $context
-     * @return void
+     * Logs the original exception for developers; never exposes raw messages to the client.
+     *
+     * @param \Throwable $e The caught exception.
+     * @return array{success: false, error: array{message: string}}
      */
-    public static function require_edit_module(\context_module $context): void {
-        require_capability('moodle/course:manageactivities', $context);
-        require_capability('local/dixeo:edit', $context);
+    public static function response(\Throwable $e): array {
+        debugging('local_dixeo_editor external error: ' . $e->getMessage(), DEBUG_DEVELOPER);
+
+        return [
+            'success' => false,
+            'error' => ['message' => self::generic_message()],
+        ];
     }
 
     /**
-     * Whether the user can use Dixeo editor features on the module.
+     * User-safe error message for external responses.
      *
-     * @param \context $context Module or compatible context.
-     * @return bool
+     * @return string
      */
-    public static function can_edit_module(\context $context): bool {
-        return has_capability('moodle/course:manageactivities', $context)
-            && has_capability('local/dixeo:edit', $context);
+    public static function generic_message(): string {
+        return get_string('error:generic', 'local_dixeo_editor');
     }
 }

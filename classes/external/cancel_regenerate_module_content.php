@@ -31,9 +31,15 @@ use core_external\external_single_structure;
 use core_external\external_value;
 use local_dixeo\external\service_factory;
 use local_dixeo_editor\local\editor_capability;
+use local_dixeo_editor\local\external_error;
 
+/**
+ * External API to cancel an asynchronous module regeneration job.
+ */
 class cancel_regenerate_module_content extends external_api {
     /**
+     * Define parameters for the web service.
+     *
      * @return external_function_parameters
      */
     public static function execute_parameters(): external_function_parameters {
@@ -44,8 +50,10 @@ class cancel_regenerate_module_content extends external_api {
     }
 
     /**
-     * @param int $cmid
-     * @param string $jobid
+     * Cancel a module content regeneration job.
+     *
+     * @param int $cmid Course module ID.
+     * @param string $jobid Job id.
      * @return array
      */
     public static function execute(int $cmid, string $jobid): array {
@@ -69,14 +77,13 @@ class cancel_regenerate_module_content extends external_api {
                 ],
             ];
         } catch (\Throwable $e) {
-            return [
-                'success' => false,
-                'error' => ['message' => $e->getMessage()],
-            ];
+            return external_error::response($e);
         }
     }
 
     /**
+     * Define return values for the web service.
+     *
      * @return external_single_structure
      */
     public static function execute_returns(): external_single_structure {

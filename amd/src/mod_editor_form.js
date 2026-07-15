@@ -1,4 +1,4 @@
-define(['jquery', 'core/templates', 'core/notification', 'core/ajax'], function($, Templates, Notification, Ajax) {
+define(['jquery', 'core/templates', 'core/notification', 'core/ajax', 'core/str'], function($, Templates, Notification, Ajax, Str) {
     // Note: Do NOT resolve DOM elements at module load time.
     // Moodle may load this AMD module before the template markup is present.
     // Always query inside init/setup to avoid stale null references.
@@ -22,6 +22,21 @@ define(['jquery', 'core/templates', 'core/notification', 'core/ajax'], function(
     function findEditorIframe() {
         const iframes = document.querySelectorAll(SELECTORS.EDITOR_IFRAME);
         return iframes.length > 0 ? iframes[0] : null;
+    }
+
+    /**
+     * Submit the editor form when the apply button lives outside the form markup.
+     */
+    function submitModEditorForm() {
+        const form = document.getElementById('mod_editor_form');
+        if (!form) {
+            return;
+        }
+        if (typeof form.requestSubmit === 'function') {
+            form.requestSubmit();
+        } else {
+            form.submit();
+        }
     }
 
     /**
@@ -93,11 +108,12 @@ define(['jquery', 'core/templates', 'core/notification', 'core/ajax'], function(
 
     return {
         init: function(cmid, slideid) {
-            waitForEditorIframe()
+            return waitForEditorIframe()
                 .then((iframeDoc) => {
                     this.editorDocument = iframeDoc;
                     injectThemeStylesIntoEditor(iframeDoc);
                     this.setupEventListeners(cmid, slideid);
+                    return undefined;
                 })
                 .catch(Notification.exception);
         },
@@ -127,13 +143,31 @@ define(['jquery', 'core/templates', 'core/notification', 'core/ajax'], function(
                 successContainer.classList.replace('d-flex', 'd-none');
             });
 
+            applyButton.addEventListener('click', () => {
+                submitModEditorForm();
+            });
+
             // Display confirm modal when clicking on the cancel button.
             cancelButton.addEventListener('click', function(event) {
                 event.preventDefault();
-                const userConfirmed = confirm("Are you sure you want to quit edit mode? All modifications will be lost.");
-                if (userConfirmed) {
-                    window.location.href = this.href;
-                }
+                const cancelUrl = this.href;
+                Promise.all([
+                    Str.get_string('cancelmodeconfirm', 'local_dixeo_editor'),
+                    Str.get_string('yes', 'moodle'),
+                    Str.get_string('no', 'moodle')
+                ]).then((strings) => {
+                    Notification.confirm(
+                        '',
+                        strings[0],
+                        strings[1],
+                        strings[2],
+                        () => {
+                            window.location.href = cancelUrl;
+                        },
+                        () => undefined
+                    );
+                    return undefined;
+                }).catch(Notification.exception);
             });
 
             // Handle AI tag button clicks.
@@ -166,18 +200,27 @@ define(['jquery', 'core/templates', 'core/notification', 'core/ajax'], function(
                 e.preventDefault();
 
                 const instructions = instructionsArea.value.trim();
+                const editorModule = this;
 
                 // Disable buttons and inputs during processing.
                 generateButton.disabled = true;
                 applyButton.disabled = true;
                 instructionsArea.disabled = true;
-                this.disableEditor();
+                editorModule.disableEditor();
 
                 // Show loader.
                 loader.classList.replace('d-none', 'd-flex');
 
+                const finishGeneration = () => {
+                    generateButton.disabled = false;
+                    applyButton.disabled = false;
+                    instructionsArea.disabled = false;
+                    editorModule.enableEditor();
+                    loader.classList.replace('d-flex', 'd-none');
+                };
+
                 // Call Dixeo web service using Moodle Ajax API.
-                Ajax.call([{
+                return Ajax.call([{
                     methodname: 'local_dixeo_editor_regenerate_module_content',
                     args: {
                         cmid: cmid,
@@ -186,19 +229,16 @@ define(['jquery', 'core/templates', 'core/notification', 'core/ajax'], function(
                     }
                 }])[0]
                 .then((response) => {
-                    // Check if the response indicates failure.
                     if (!response.success) {
                         const errorMsg = response.error?.message || 'An unexpected error occurred. Please try again.';
                         throw new Error(errorMsg);
                     }
                     return response;
                 })
-                .then((response) => {
-                    // Update the editor's content using response.data.content.
-                    this.editorDocument.body.innerHTML = response.data.content;
+                .then(async(response) => {
+                    editorModule.editorDocument.body.innerHTML = response.data.content;
                     const textarea = document.getElementById(SELECTORS.TEXTAREA);
                     if (textarea) {
-                        // Trigger TinyMCE undo event safely if TinyMCE is present.
                         const tinymceInstance = (window.tinymce && typeof window.tinymce.get === 'function')
                             ? window.tinymce.get(textarea.id)
                             : null;
@@ -212,25 +252,18 @@ define(['jquery', 'core/templates', 'core/notification', 'core/ajax'], function(
                         }
                     }
 
-                    // Display success message.
-                    Templates.renderForPromise('local_dixeo_editor/success_box', {})
-                        .then(({html, js}) => {
-                            Templates.appendNodeContents('#success_message_container', html, js);
-                            successContainer.classList.replace('d-none', 'd-flex');
-                        });
+                    const rendered = await Templates.renderForPromise('local_dixeo_editor/success_box', {});
+                    Templates.appendNodeContents('#success_message_container', rendered.html, rendered.js);
+                    successContainer.classList.replace('d-none', 'd-flex');
+                    return undefined;
                 })
                 .catch((error) => {
                     Notification.exception(error);
+                    return undefined;
                 })
                 .then(() => {
-                    // Re-enable buttons and inputs.
-                    generateButton.disabled = false;
-                    applyButton.disabled = false;
-                    instructionsArea.disabled = false;
-                    this.enableEditor();
-
-                    // Hide loader.
-                    loader.classList.replace('d-flex', 'd-none');
+                    finishGeneration();
+                    return undefined;
                 });
             });
         },
