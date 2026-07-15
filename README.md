@@ -1,67 +1,45 @@
-# Dixeo AI Editor — Moodle Plugin
+# Dixeo AI Editor
 
-**Plugin component:** `local_dixeo_editor`  
-**Description:** Local plugin that adds AI-assisted content editing for supported Moodle activities (page, label, slideshow). It provides an editing UI with TinyMCE integration and calls Dixeo web services to regenerate or refine module content.
-
----
+This local plugin provides AI-assisted editing for Moodle's _Page_ and _Text & Media_ activities, as well as Dixeo's own _Slideshow_ activity. It adds a "Dixeo Editor" item to the activity menu that opens a TinyMCE editor extended with an AI prompt area.
 
 ## Features
 
-- **AI-powered content editing** for page, label, and slideshow activities.
-- **Quick-prompt toolbar** for common transformations (translate, enrich, prettify, tone, structure, and more).
-- **TinyMCE integration** with optional Tiny autosave draft support during async regeneration.
-- **Sync and async flows** via the plugin's AJAX web services.
-
----
+- **AI-Assisted Text Generation and Editing**: Dixeo generates or modifies module content based on your natural lanuage instructions.
+- **Integration With TinyMCE**: The plugin integrates with the standard TinyMCE editor, extending it with an AI prompt area.
+- **Quick Prompts**: Supports pre-programmed prompts to translate, enrich, or prettify content with a single click.
+- **Success Notification**: Displays a custom success box upon completion of content update.
+- **Undo/Redo Functionality**: Changes made by the AI can be undone/redone, exactly like with manual chnages.
 
 ## Requirements
 
-- **Moodle:** 4.1+ (see `version.php` for the exact `$plugin->requires` value).
-- **TinyMCE:** Required for the in-browser editing experience.
-- **local_dixeo:** Required dependency (`$plugin->dependencies`); provides API access, job handling, and the `local/dixeo:edit` capability.
+- **Moodle**: 4.3 (or above; should be compatible with 4.1+).
+- **TinyMCE**: Must be configured as the default Moodle text editor.
+- **Dixeo AI (local_dixeo)**: The Dixeo AI core plugin and a valid Dixeo API key.
 
----
+## Installation
 
-## Capabilities
+1. Copy `dixeo_editor` to `/local/dixeo_editor/`
+2. Visit Site Administration > Notifications
+3. Complete the Moodle upgrade.
 
-Editor access is enforced at runtime by `editor_capability`, which requires **both**:
+## Configuration
 
-- `moodle/course:manageactivities`
-- `local/dixeo:edit` (defined in `local_dixeo`)
-
-The editor plugin does not define its own `db/access.php`; capability management stays in `local_dixeo`.
-
----
-
-## Web services
-
-Registered in `db/services.php` (all require the capabilities above):
-
-| Function | Purpose |
-|---|---|
-| `local_dixeo_editor_regenerate_module_content` | Synchronous content regeneration |
-| `local_dixeo_editor_start_regenerate_module_content` | Start async regeneration job |
-| `local_dixeo_editor_get_regenerate_module_content_status` | Poll async job status |
-| `local_dixeo_editor_cancel_regenerate_module_content` | Cancel async job |
-
----
+- The plugin does not require additional configuration.
+- Users must have the capabilities **local/dixeo:edit** and **moodle/course:manageactivities** in the course (or module) context. 
 
 ## Usage
 
-1. Open a supported activity (page, label, or slideshow slide) in a course where you have editor capabilities.
-2. Use the Dixeo editor entry point (activity menu / edit tab, depending on module).
-3. Enter instructions or choose a quick prompt, then generate content.
-4. Review the result in TinyMCE and save through the normal Moodle activity workflow.
+1. Navigate to a **Page**, **Text & Media** or **Slideshow** activity in a course.
+2. In the activity menu (or contextual menu on the course page), click on **Dixeo Editor** to open the AI editing interface.
+3. Enter your prompt or select a quick-prompt from the AI editing area situated below the TinyMCE window.
+4. Press the Dixeo logo to update your content with AI.
+5. Undo/redo changes from TinyMCE.
+6. Save the changes and exit the editor by clicking **OK** (or press **X** to discard changes).
 
----
+## License
 
-## Integration with Dixeo
+GNU GPL v3 or later
+Copyright (C) 2026 Edunao
 
-Content editing is delegated to `local_dixeo` services. The editor externals build activity context (including slideshow slide ownership checks) and submit jobs to the Dixeo API (`/v1/modules/edit`). The plugin does not persist AI payloads in its own database tables.
-
----
-
-## Customization
-
-- **UI / prompts:** Templates and AMD modules under `templates/` and `amd/src/`.
-- **New activity types:** Register adapters via `activity_adapter_factory::register_adapter()`.
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License.
