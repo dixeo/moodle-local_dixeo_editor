@@ -401,19 +401,13 @@ define([
         setEditorContent: function(content) {
             var textarea = document.getElementById(SELECTORS.editorTextarea);
             var editor = (window.tinymce && textarea) ? window.tinymce.get(textarea.id) : null;
-            if (editor) {
-                editor.setContent(content || '');
-                if (typeof editor.save === 'function') {
-                    editor.save();
-                }
-            } else {
-                var iframeDoc = this.getEditorIframeDocument();
-                if (iframeDoc) {
-                    iframeDoc.body.innerHTML = content || '';
-                }
-                if (textarea) {
-                    textarea.value = content || '';
-                }
+            if (!editor) {
+                // Do not inject AI HTML via iframe innerHTML; TinyMCE must be ready.
+                return;
+            }
+            editor.setContent(content || '');
+            if (typeof editor.save === 'function') {
+                editor.save();
             }
         },
 
