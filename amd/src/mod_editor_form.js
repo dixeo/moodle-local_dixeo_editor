@@ -236,20 +236,26 @@ define(['jquery', 'core/templates', 'core/notification', 'core/ajax', 'core/str'
                     return response;
                 })
                 .then(async(response) => {
-                    editorModule.editorDocument.body.innerHTML = response.data.content;
                     const textarea = document.getElementById(SELECTORS.TEXTAREA);
-                    if (textarea) {
-                        const tinymceInstance = (window.tinymce && typeof window.tinymce.get === 'function')
-                            ? window.tinymce.get(textarea.id)
-                            : null;
-                        if (tinymceInstance && tinymceInstance.undoManager) {
-                            tinymceInstance.focus();
-                            tinymceInstance.undoManager.transact(() => {
-                                tinymceInstance.setContent(response.data.content);
-                            });
-                            tinymceInstance.selection.setCursorLocation();
-                            tinymceInstance.nodeChanged();
-                        }
+                    const tinymceInstance = (textarea && window.tinymce && typeof window.tinymce.get === 'function')
+                        ? window.tinymce.get(textarea.id)
+                        : null;
+                    if (!tinymceInstance) {
+                        // Do not inject AI HTML via iframe innerHTML; TinyMCE must be ready.
+                        throw new Error('Editor is not ready. Please try again.');
+                    }
+                    if (tinymceInstance.undoManager) {
+                        tinymceInstance.focus();
+                        tinymceInstance.undoManager.transact(() => {
+                            tinymceInstance.setContent(response.data.content || '');
+                        });
+                        tinymceInstance.selection.setCursorLocation();
+                        tinymceInstance.nodeChanged();
+                    } else {
+                        tinymceInstance.setContent(response.data.content || '');
+                    }
+                    if (typeof tinymceInstance.save === 'function') {
+                        tinymceInstance.save();
                     }
 
                     const rendered = await Templates.renderForPromise('local_dixeo_editor/success_box', {});
