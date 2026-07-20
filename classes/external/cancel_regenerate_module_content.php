@@ -30,6 +30,7 @@ use core_external\external_function_parameters;
 use core_external\external_single_structure;
 use core_external\external_value;
 use local_dixeo\external\service_factory;
+use local_dixeo_editor\event\regenerate_cancelled;
 use local_dixeo_editor\local\editor_capability;
 use local_dixeo_editor\local\external_error;
 
@@ -76,6 +77,7 @@ class cancel_regenerate_module_content extends external_api {
                 (int) $cm->course,
                 (int) $USER->id
             );
+            regenerate_cancelled::create_for_cm($cm, (int) $USER->id, $params['jobid'])->trigger();
             return [
                 'success' => true,
                 'data' => [

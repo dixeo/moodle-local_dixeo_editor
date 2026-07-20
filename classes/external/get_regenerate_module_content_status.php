@@ -31,6 +31,7 @@ use core_external\external_single_structure;
 use core_external\external_value;
 use local_dixeo\external\service_factory;
 use local_dixeo_editor\activity\activity_adapter_factory;
+use local_dixeo_editor\event\regenerate_completed;
 use local_dixeo_editor\local\content_sanitizer;
 use local_dixeo_editor\local\editor_capability;
 use local_dixeo_editor\local\external_error;
@@ -104,6 +105,8 @@ class get_regenerate_module_content_status extends external_api {
                 $resultdata = $statusdto->result['data'] ?? [];
                 $rawcontent = $resultdata[$contentfield] ?? ($resultdata['content'] ?? '');
                 $data['content'] = content_sanitizer::sanitize((string) $rawcontent);
+                // Audit only: job id + cm — never put content in the event payload.
+                regenerate_completed::create_for_cm($cm, (int) $USER->id, $statusdto->jobid)->trigger();
             }
 
             return [

@@ -33,6 +33,7 @@ use invalid_parameter_exception;
 use local_dixeo\context\context_builder_factory;
 use local_dixeo\external\service_factory;
 use local_dixeo\service\tiny_autosave_draft_service;
+use local_dixeo_editor\event\regenerate_started;
 use local_dixeo_editor\local\editor_capability;
 use local_dixeo_editor\local\external_error;
 
@@ -143,6 +144,8 @@ class start_regenerate_module_content extends external_api {
             }
 
             $result = service_factory::get_job_service()->submit_job('/v1/modules/edit', $payload);
+
+            regenerate_started::create_for_cm($cm, (int) $USER->id, $result->jobid)->trigger();
 
             return [
                 'success' => true,
