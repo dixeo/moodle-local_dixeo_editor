@@ -25,15 +25,16 @@
 
 namespace local_dixeo_editor\external;
 
+use context_module;
 use core_external\external_api;
 use core_external\external_function_parameters;
 use core_external\external_single_structure;
 use core_external\external_value;
-use context_module;
-use local_dixeo_editor\local\editor_capability;
-use local_dixeo_editor\local\external_error;
 use local_dixeo\service\module_generation_service;
 use local_dixeo_editor\activity\activity_adapter_factory;
+use local_dixeo_editor\local\content_sanitizer;
+use local_dixeo_editor\local\editor_capability;
+use local_dixeo_editor\local\external_error;
 
 /**
  * Regenerate module content using AI via the Dixeo service.
@@ -105,7 +106,7 @@ class regenerate_module_content extends external_api {
                 : '';
             return [
                 'success' => true,
-                'data' => ['content' => $content],
+                'data' => ['content' => content_sanitizer::sanitize((string) $content)],
             ];
         }
 

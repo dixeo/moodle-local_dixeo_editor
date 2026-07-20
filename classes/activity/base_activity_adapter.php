@@ -28,6 +28,7 @@ namespace local_dixeo_editor\activity;
 use context_module;
 use moodle_database;
 use stdClass;
+use local_dixeo_editor\local\content_sanitizer;
 
 /**
  * Template Method pattern: common logic lives here, variations are delegated
@@ -188,6 +189,9 @@ abstract class base_activity_adapter implements activity_adapter_interface {
     public function save_content(string $content, int $format, int $itemid, array $editoroptions): void {
         $contentfield = $this->get_content_field();
         $formatfield = $this->get_format_field();
+
+        // Purify untrusted HTML (including AI-generated content) before persist.
+        $content = content_sanitizer::sanitize($content, $format);
 
         $this->record->{$contentfield} = $content;
         $this->record->{$formatfield} = $format;
