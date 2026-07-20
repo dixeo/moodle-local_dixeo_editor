@@ -65,7 +65,7 @@ class get_regenerate_module_content_status extends external_api {
      * @return array
      */
     public static function execute(int $cmid, string $jobid, int $slideid = 0): array {
-        global $DB;
+        global $DB, $USER;
 
         $params = self::validate_parameters(self::execute_parameters(), [
             'cmid' => $cmid,
@@ -79,7 +79,12 @@ class get_regenerate_module_content_status extends external_api {
         editor_capability::require_edit_module($context);
 
         try {
-            $statusdto = service_factory::get_job_service()->get_job_status($params['jobid']);
+            // Editor regenerate jobs are initiator-scoped.
+            $statusdto = service_factory::get_job_service()->get_job_status(
+                $params['jobid'],
+                (int) $cm->course,
+                (int) $USER->id
+            );
             $status = self::normalize_status($statusdto->status, $statusdto->errorcode);
 
             $data = [

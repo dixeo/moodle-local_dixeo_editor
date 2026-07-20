@@ -134,6 +134,7 @@ class start_regenerate_module_content extends external_api {
                 'instructions' => $params['instructions'],
                 'context' => context_builder_factory::build_edit_context($params['cmid'], $subid, $drafthtml),
                 'courseId' => (string) $cm->course,
+                'userId' => (string) $USER->id,
             ];
 
             $namespace = \local_dixeo_get_configured_namespace();

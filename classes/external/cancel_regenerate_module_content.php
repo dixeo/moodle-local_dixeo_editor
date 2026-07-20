@@ -57,6 +57,8 @@ class cancel_regenerate_module_content extends external_api {
      * @return array
      */
     public static function execute(int $cmid, string $jobid): array {
+        global $USER;
+
         $params = self::validate_parameters(self::execute_parameters(), [
             'cmid' => $cmid,
             'jobid' => $jobid,
@@ -68,7 +70,12 @@ class cancel_regenerate_module_content extends external_api {
         editor_capability::require_edit_module($context);
 
         try {
-            $result = service_factory::get_job_service()->cancel_job($params['jobid']);
+            // Editor regenerate jobs are initiator-scoped.
+            $result = service_factory::get_job_service()->cancel_job(
+                $params['jobid'],
+                (int) $cm->course,
+                (int) $USER->id
+            );
             return [
                 'success' => true,
                 'data' => [
