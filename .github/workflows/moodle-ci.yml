@@ -67,7 +67,7 @@ jobs:
         env:
           DB: ${{ matrix.database }}
           MOODLE_BRANCH: ${{ matrix.moodle-branch }}
-          DIXEO_DEP_BRANCH: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
+          DIXEO_DEP_BRANCH: ${{ github.event_name == 'pull_request' && github.head_ref || (startsWith(github.ref, 'refs/tags/') && 'release' || github.ref_name) }}
           # Uncomment this to run Behat tests using the Moodle App.
           # MOODLE_APP: 'true'
 
