@@ -54,6 +54,7 @@ class provider implements
                 'instructions' => 'privacy:metadata:instructions',
                 'context' => 'privacy:metadata:context',
                 'courseId' => 'privacy:metadata:courseid',
+                'userId' => 'privacy:metadata:userid',
                 'moduleType' => 'privacy:metadata:moduletype',
                 'namespace' => 'privacy:metadata:namespace',
             ],

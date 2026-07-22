@@ -74,6 +74,7 @@ $string['privacy:metadata:instructions'] = 'User-provided editing instructions f
 $string['privacy:metadata:moduletype'] = 'The Moodle activity type being edited (for example page, label, or slideshow).';
 $string['privacy:metadata:namespace'] = 'Optional Dixeo API namespace configured for the site.';
 $string['privacy:metadata:preference:panel_layout'] = 'The user\'s preferred layout for the content editor AI panel (dock position or floating).';
+$string['privacy:metadata:userid'] = 'The Moodle user ID associated with the regenerate request.';
 $string['prompt_audience_beginner'] = 'Adapt the content for beginner learners by simplifying terminology, explaining foundational concepts, and using clear examples. Ensure an approachable pace and avoid unnecessary complexity.';
 $string['prompt_audience_expert'] = 'Adapt the content for expert learners by increasing technical precision and depth. Use advanced terminology where appropriate, include nuanced detail, and maintain concise professional language.';
 $string['prompt_audience_intermediate'] = 'Adapt the content for intermediate learners by balancing clarity with depth. Preserve core concepts, introduce moderate technical detail, and include practical examples to strengthen understanding.';
