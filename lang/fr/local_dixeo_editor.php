@@ -74,6 +74,7 @@ $string['privacy:metadata:instructions'] = 'Instructions d\'édition fournies pa
 $string['privacy:metadata:moduletype'] = 'Le type d\'activité Moodle édité (par exemple page, étiquette ou diaporama).';
 $string['privacy:metadata:namespace'] = 'Espace de noms API Dixeo optionnel configuré pour le site.';
 $string['privacy:metadata:preference:panel_layout'] = 'Disposition préférée du panneau IA de l\'éditeur de contenu (ancrage ou fenêtre flottante).';
+$string['privacy:metadata:userid'] = 'L\'identifiant utilisateur Moodle associé à la demande de régénération.';
 $string['prompt_audience_beginner'] = "Adapte le contenu aux apprenants débutants en simplifiant la terminologie, en expliquant les notions de base et en utilisant des exemples clairs. Assure un rythme accessible et évite toute complexité inutile.";
 $string['prompt_audience_expert'] = "Adapte le contenu aux apprenants experts en augmentant la précision technique et la profondeur. Utilise une terminologie avancée lorsque pertinent, ajoute des nuances utiles et maintiens un style professionnel concis.";
 $string['prompt_audience_intermediate'] = "Adapte le contenu aux apprenants intermédiaires en équilibrant clarté et profondeur. Préserve les concepts clés, introduis un niveau de détail technique modéré et ajoute des exemples pratiques pour renforcer la compréhension.";

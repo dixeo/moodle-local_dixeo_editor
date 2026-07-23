@@ -74,6 +74,7 @@ $string['privacy:metadata:instructions'] = 'Instruções de edição fornecidas 
 $string['privacy:metadata:moduletype'] = 'O tipo de atividade Moodle editada (por exemplo página, rótulo ou apresentação).';
 $string['privacy:metadata:namespace'] = 'Namespace opcional da API Dixeo configurado para o site.';
 $string['privacy:metadata:preference:panel_layout'] = 'Layout preferido do painel de IA do editor de conteúdo (ancorado ou flutuante).';
+$string['privacy:metadata:userid'] = 'O identificador de utilizador Moodle associado ao pedido de regeneração.';
 $string['prompt_audience_beginner'] = 'Adapta o conteúdo para formandos iniciantes simplificando a terminologia, explicando conceitos fundamentais e usando exemplos claros. Garante um ritmo acessível e evita complexidade desnecessária.';
 $string['prompt_audience_expert'] = 'Adapta o conteúdo para formandos especialistas aumentando a precisão técnica e a profundidade. Usa terminologia avançada quando apropriado, inclui detalhe mais fino e mantém linguagem profissional e concisa.';
 $string['prompt_audience_intermediate'] = 'Adapta o conteúdo para formandos intermédios equilibrando clareza e profundidade. Preserva os conceitos nucleares, introduz detalhe técnico moderado e inclui exemplos práticos para reforçar a compreensão.';

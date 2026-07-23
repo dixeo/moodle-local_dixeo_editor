@@ -74,6 +74,7 @@ $string['privacy:metadata:instructions'] = 'Vom Benutzer bereitgestellte Bearbei
 $string['privacy:metadata:moduletype'] = 'Der Moodle-Aktivitätstyp, der bearbeitet wird (z. B. Seite, Textfeld oder Slideshow).';
 $string['privacy:metadata:namespace'] = 'Optionaler für die Website konfigurierter Dixeo-API-Namespace.';
 $string['privacy:metadata:preference:panel_layout'] = 'Bevorzugtes Layout des KI-Panels im Inhaltseditor (Andockposition oder schwebend).';
+$string['privacy:metadata:userid'] = 'Die Moodle-Benutzer-ID, die mit der Regenerierungsanfrage verknüpft ist.';
 $string['prompt_audience_beginner'] = 'Passe den Inhalt an Anfänger an, indem Terminologie vereinfacht, Grundlagen erklärt und klare Beispiele verwendet werden. Sorge für ein zugängliches Tempo und vermeide unnötige Komplexität.';
 $string['prompt_audience_expert'] = 'Passe den Inhalt an Expertinnen und Experten an, indem technische Präzision und Tiefe erhöht werden. Verwende bei Bedarf fortgeschrittene Terminologie, ergänze differenzierte Details und halte den Stil professionell und prägnant.';
 $string['prompt_audience_intermediate'] = 'Passe den Inhalt an Lernende auf mittlerem Niveau an, indem Klarheit und Tiefe ausgewogen kombiniert werden. Erhalte Kernkonzepte, ergänze moderaten technischen Detailgrad und füge praxisnahe Beispiele hinzu.';

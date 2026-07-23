@@ -74,6 +74,7 @@ $string['privacy:metadata:instructions'] = 'Instrucciones de edición proporcion
 $string['privacy:metadata:moduletype'] = 'El tipo de actividad de Moodle que se edita (por ejemplo página, etiqueta o presentación).';
 $string['privacy:metadata:namespace'] = 'Espacio de nombres opcional de la API Dixeo configurado para el sitio.';
 $string['privacy:metadata:preference:panel_layout'] = 'Disposición preferida del panel de IA del editor de contenido (posición acoplada o flotante).';
+$string['privacy:metadata:userid'] = 'El identificador de usuario de Moodle asociado a la solicitud de regeneración.';
 $string['prompt_audience_beginner'] = 'Adapta el contenido para estudiantes principiantes simplificando la terminología, explicando conceptos fundamentales y utilizando ejemplos claros. Asegura un ritmo accesible y evita complejidad innecesaria.';
 $string['prompt_audience_expert'] = 'Adapta el contenido para estudiantes expertos aumentando la precisión técnica y la profundidad. Usa terminología avanzada cuando corresponda, añade matices relevantes y mantén un lenguaje profesional y conciso.';
 $string['prompt_audience_intermediate'] = 'Adapta el contenido para estudiantes de nivel intermedio equilibrando claridad y profundidad. Conserva los conceptos centrales, introduce detalle técnico moderado e incluye ejemplos prácticos para reforzar la comprensión.';

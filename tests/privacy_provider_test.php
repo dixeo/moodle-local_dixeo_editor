@@ -47,6 +47,19 @@ final class privacy_provider_test extends \advanced_testcase {
         $names = array_map(static fn($item) => $item->get_name(), $items);
         $this->assertContains('local_dixeo_editor_content_panel_state', $names);
         $this->assertContains('dixeo_api', $names);
+
+        $external = null;
+        foreach ($items as $item) {
+            if ($item->get_name() === 'dixeo_api') {
+                $external = $item;
+                break;
+            }
+        }
+        $this->assertNotNull($external);
+        $fields = array_keys($external->get_privacy_fields());
+        foreach (['courseId', 'userId', 'instructions', 'context', 'moduleType', 'namespace'] as $field) {
+            $this->assertContains($field, $fields, "External metadata must declare {$field}");
+        }
     }
 
     public function test_export_user_preferences_exports_panel_layout(): void {
