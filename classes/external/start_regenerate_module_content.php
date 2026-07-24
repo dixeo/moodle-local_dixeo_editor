@@ -143,7 +143,11 @@ class start_regenerate_module_content extends external_api {
                 $payload['namespace'] = $namespace;
             }
 
-            $result = service_factory::get_job_service()->submit_job('/v1/modules/edit', $payload);
+            $result = service_factory::get_job_service()->submit_job(
+                '/v1/modules/edit',
+                $payload,
+                'local_dixeo_editor'
+            );
 
             regenerate_started::create_for_cm($cm, (int) $USER->id, $result->jobid)->trigger();
 
