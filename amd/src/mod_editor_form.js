@@ -1,3 +1,11 @@
+/**
+ * Module content editor form: TinyMCE integration and AI regenerate controls.
+ *
+ * @module     local_dixeo_editor/mod_editor_form
+ * @copyright  2025 Edunao SAS (contact@edunao.com)
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
 define(['jquery', 'core/templates', 'core/notification', 'core/ajax', 'core/str'], function($, Templates, Notification, Ajax, Str) {
     // Note: Do NOT resolve DOM elements at module load time.
     // Moodle may load this AMD module before the template markup is present.

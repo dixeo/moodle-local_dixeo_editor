@@ -1,3 +1,11 @@
+/**
+ * Injects AI content edit links into course module action menus.
+ *
+ * @module     local_dixeo_editor/action_menu_edit
+ * @copyright  2025 Edunao SAS (contact@edunao.com)
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
 define(['core/str'], function(str) {
     return {
         init: async function() {
