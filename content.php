@@ -46,22 +46,50 @@ $PAGE->add_body_class('limitedwidth');
 $factory = new \local_dixeo_editor\activity\activity_adapter_factory($DB);
 $activityadapter = $factory->create($cmid, $subid);
 
+$editorsession = \local_dixeo_editor\local\editor_session_repository::get_or_create_active(
+    $cmid,
+    $subid,
+    (int) $USER->id
+);
+
 $editoroptions = page_get_editor_options($context);
 $fieldname = 'modulecontent';
 $mform = new \local_dixeo_editor\form\mod_editor_form(null, [
     'cmid' => $cm->id,
     'editoroptions' => $editoroptions,
     'fieldname' => $fieldname,
+    'editorsessionid' => (int) $editorsession->id,
 ]);
 
 if ($mform->is_cancelled()) {
+    $sessionid = optional_param('editorsessionid', 0, PARAM_INT);
+    if ($sessionid > 0) {
+        \local_dixeo_editor\local\editor_session_repository::require_owned(
+            $sessionid,
+            (int) $USER->id,
+            (int) $cmid
+        );
+        \local_dixeo_editor\local\editor_session_repository::discard(
+            $sessionid,
+            $activityadapter->get_modname(),
+            $context
+        );
+    }
     redirect($activityadapter->get_redirect_url($course->id, $cmid));
 } else if ($data = $mform->get_data()) {
     $content = $data->{$fieldname}['text'];
     $format = $data->{$fieldname}['format'];
     $itemid = $data->{$fieldname}['itemid'];
+    $sessionid = isset($data->editorsessionid) ? (int) $data->editorsessionid : 0;
+    if ($sessionid > 0) {
+        \local_dixeo_editor\local\editor_session_repository::require_owned(
+            $sessionid,
+            (int) $USER->id,
+            (int) $cmid
+        );
+    }
 
-    $activityadapter->save_content($content, $format, $itemid, $editoroptions);
+    $activityadapter->save_content($content, $format, $itemid, $editoroptions, $sessionid > 0 ? $sessionid : null);
     \core\event\course_module_updated::create_from_cm($cm)->trigger();
     rebuild_course_cache($course->id, true);
     redirect($activityadapter->get_redirect_url($course->id, $cmid));
@@ -96,6 +124,11 @@ if (isloggedin() && !isguestuser()) {
     $savedlayout = (string) get_user_preferences('local_dixeo_editor_content_panel_state', '');
 }
 
-$PAGE->requires->js_call_amd('local_dixeo_editor/content_editor', 'init', [$cmid, $savedlayout, $subid]);
+$PAGE->requires->js_call_amd('local_dixeo_editor/content_editor', 'init', [
+    $cmid,
+    $savedlayout,
+    $subid,
+    (int) $editorsession->id,
+]);
 
 echo $OUTPUT->footer();

@@ -57,11 +57,14 @@ interface activity_adapter_interface {
     /**
      * Prepare the content for editing in draft mode.
      *
-     * @param int $draftitemid Draft file area item id.
+     * @param int|null $draftitemid Passed by reference: 0/null lets core allocate
+     *                              a new draft area and the generated id is
+     *                              written back (same contract as
+     *                              file_prepare_draft_area).
      * @param array $editoroptions Editor options.
      * @return string The draft text.
      */
-    public function prepare_draft_area(int $draftitemid, array $editoroptions): string;
+    public function prepare_draft_area(?int &$draftitemid, array $editoroptions): string;
 
     /**
      * Save the edited content.
@@ -70,8 +73,9 @@ interface activity_adapter_interface {
      * @param int $format Content format.
      * @param int $itemid Draft item id.
      * @param array $editoroptions Editor options.
+     * @param int|null $sessionid Editor session id for draft image promotion.
      */
-    public function save_content(string $content, int $format, int $itemid, array $editoroptions): void;
+    public function save_content(string $content, int $format, int $itemid, array $editoroptions, ?int $sessionid = null): void;
 
     /**
      * Return the URL where the user should be redirected after saving/cancelling.

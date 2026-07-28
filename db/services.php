@@ -54,4 +54,18 @@ $functions = [
         'ajax'        => true,
         'capabilities' => 'moodle/course:manageactivities,local/dixeo:edit',
     ],
+    'local_dixeo_editor_discard_editor_session' => [
+        'classname'   => 'local_dixeo_editor\external\discard_editor_session',
+        'description' => 'Discard editor session draft images and fail pending jobs',
+        'type'        => 'write',
+        'ajax'        => true,
+        'capabilities' => 'local/dixeo:edit',
+    ],
+    'local_dixeo_editor_get_editor_draft_image_status' => [
+        'classname'   => 'local_dixeo_editor\external\get_editor_draft_image_status',
+        'description' => 'Poll pending draft image placeholder status in the editor',
+        'type'        => 'read',
+        'ajax'        => true,
+        'capabilities' => 'local/dixeo:edit',
+    ],
 ];

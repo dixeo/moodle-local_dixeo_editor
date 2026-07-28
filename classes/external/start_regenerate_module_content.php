@@ -30,11 +30,13 @@ use core_external\external_function_parameters;
 use core_external\external_single_structure;
 use core_external\external_value;
 use invalid_parameter_exception;
-use local_dixeo\context\context_builder_factory;
 use local_dixeo\external\service_factory;
+use local_dixeo\service\image\content\editor_regenerate_service;
 use local_dixeo\service\tiny_autosave_draft_service;
 use local_dixeo_editor\event\regenerate_started;
 use local_dixeo_editor\local\editor_capability;
+use local_dixeo_editor\local\editor_image_context_factory;
+use local_dixeo_editor\local\editor_session_repository;
 use local_dixeo_editor\local\external_error;
 
 /**
@@ -50,6 +52,7 @@ class start_regenerate_module_content extends external_api {
         return new external_function_parameters([
             'cmid' => new external_value(PARAM_INT, 'Course module ID'),
             'instructions' => new external_value(PARAM_TEXT, 'AI instructions'),
+            'sessionid' => new external_value(PARAM_INT, 'Editor session ID'),
             'slideid' => new external_value(
                 PARAM_INT,
                 'Slide row ID (required for slideshow, 0 otherwise)',
@@ -82,6 +85,7 @@ class start_regenerate_module_content extends external_api {
      *
      * @param int $cmid Course module ID.
      * @param string $instructions AI regeneration instructions.
+     * @param int $sessionid Editor session ID.
      * @param int $slideid Slide row ID (slideshow only, 0 otherwise).
      * @param int $autosavecontextid Tiny autosave context id (0 = skip).
      * @param string $autosavepagehash Tiny autosave page hash.
@@ -91,6 +95,7 @@ class start_regenerate_module_content extends external_api {
     public static function execute(
         int $cmid,
         string $instructions,
+        int $sessionid,
         int $slideid = 0,
         int $autosavecontextid = 0,
         string $autosavepagehash = '',
@@ -101,6 +106,7 @@ class start_regenerate_module_content extends external_api {
         $params = self::validate_parameters(self::execute_parameters(), [
             'cmid' => $cmid,
             'instructions' => $instructions,
+            'sessionid' => $sessionid,
             'slideid' => $slideid,
             'autosave_contextid' => $autosavecontextid,
             'autosave_pagehash' => $autosavepagehash,
@@ -112,13 +118,20 @@ class start_regenerate_module_content extends external_api {
         self::validate_context($context);
         editor_capability::require_edit_module($context);
 
+        $session = editor_session_repository::get($params['sessionid']);
+        if (!$session || (int) $session->userid !== (int) $USER->id) {
+            return [
+                'success' => false,
+                'error' => ['message' => 'Invalid editor session'],
+            ];
+        }
+
         try {
             require_once($CFG->dirroot . '/local/dixeo/lib.php');
 
             $slideidparam = (int) $params['slideid'];
             $subid = $slideidparam > 0 ? $slideidparam : null;
 
-            // Autosave draft is only meaningful for simple (single-editor) modules.
             $drafthtml = $subid === null
                 ? self::resolve_autosave_draft_html(
                     $cm,
@@ -130,20 +143,18 @@ class start_regenerate_module_content extends external_api {
                 )
                 : null;
 
-            $payload = [
-                'moduleType' => $cm->modname,
-                'instructions' => $params['instructions'],
-                'context' => context_builder_factory::build_edit_context($params['cmid'], $subid, $drafthtml),
-                'courseId' => (string) $cm->course,
-                'userId' => (string) $USER->id,
-            ];
+            $imagecontext = editor_image_context_factory::from_cmid($params['cmid'], $subid, $params['sessionid']);
 
-            $namespace = \local_dixeo_get_configured_namespace();
-            if (!empty($namespace)) {
-                $payload['namespace'] = $namespace;
-            }
+            $built = editor_regenerate_service::build_edit_payload(
+                $params['cmid'],
+                $subid,
+                $params['instructions'],
+                $imagecontext,
+                $drafthtml,
+                (int) $USER->id
+            );
 
-            $result = service_factory::get_job_service()->submit_job('/v1/modules/edit', $payload);
+            $result = service_factory::get_module_generation_service()->submit_edit_job($built['payload']);
 
             regenerate_started::create_for_cm($cm, (int) $USER->id, $result->jobid)->trigger();
 
