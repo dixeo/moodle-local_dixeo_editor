@@ -30,6 +30,7 @@ use core_external\external_function_parameters;
 use core_external\external_single_structure;
 use core_external\external_value;
 use invalid_parameter_exception;
+use local_dixeo\dto\job_binding_metadata;
 use local_dixeo\external\service_factory;
 use local_dixeo\service\image\content\editor_regenerate_service;
 use local_dixeo\service\tiny_autosave_draft_service;
@@ -154,7 +155,10 @@ class start_regenerate_module_content extends external_api {
                 (int) $USER->id
             );
 
-            $result = service_factory::get_module_generation_service()->submit_edit_job($built['payload']);
+            $result = service_factory::get_module_generation_service()
+                ->set_component('local_dixeo_editor')
+                ->set_job_metadata(job_binding_metadata::for_module($cm->modname, (int) $cm->id))
+                ->submit_edit_job($built['payload']);
 
             regenerate_started::create_for_cm($cm, (int) $USER->id, $result->jobid)->trigger();
 
