@@ -80,7 +80,8 @@ class cancel_regenerate_module_content extends external_api {
             );
             $result = service_factory::get_job_service()->cancel_job(
                 $params['jobid'],
-                (int) $cm->course
+                (int) $cm->course,
+                (int) $USER->id
             );
             regenerate_cancelled::create_for_cm($cm, (int) $USER->id, $params['jobid'])->trigger();
             return [

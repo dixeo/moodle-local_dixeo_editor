@@ -105,7 +105,8 @@ class get_regenerate_module_content_status extends external_api {
             );
             $statusdto = service_factory::get_job_service()->get_job_status(
                 $params['jobid'],
-                (int) $cm->course
+                (int) $cm->course,
+                (int) $USER->id
             );
             $status = self::normalize_status($statusdto->status, $statusdto->errorcode);
 
