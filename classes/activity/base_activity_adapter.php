@@ -26,6 +26,9 @@
 namespace local_dixeo_editor\activity;
 
 use context_module;
+use local_dixeo\service\image\content\editor_session_promoter;
+use local_dixeo_editor\local\editor_image_context_factory;
+use local_dixeo_editor\local\editor_session_repository;
 use moodle_database;
 use stdClass;
 use local_dixeo_editor\local\content_sanitizer;
@@ -138,6 +141,63 @@ abstract class base_activity_adapter implements activity_adapter_interface {
     }
 
     /**
+     * Return the Moodle module name for this activity.
+     *
+     * @return string
+     */
+    public function get_modname(): string {
+        return $this->get_module_name();
+    }
+
+    /**
+     * Return the file area name used for this activity's content files.
+     *
+     * @return string
+     */
+    public function get_file_area_name(): string {
+        return $this->get_file_area();
+    }
+
+    /**
+     * Return the file item id used for this activity's content files.
+     *
+     * @return int
+     */
+    public function get_file_item_id(): int {
+        return $this->get_file_itemid();
+    }
+
+    /**
+     * Return the target DB record id.
+     *
+     * @return int
+     */
+    public function get_record_id(): int {
+        return (int) $this->record->id;
+    }
+
+    /**
+     * Return the module context.
+     *
+     * @return context_module
+     */
+    public function get_context(): context_module {
+        return $this->context;
+    }
+
+    /**
+     * Return the shortcode entity type for image generation.
+     *
+     * @return string
+     */
+    public function get_shortcode_entity(): string {
+        if ($this->get_table_name() === 'slideshow_slide') {
+            return 'slideshow_slide';
+        }
+        return $this->get_module_name();
+    }
+
+    /**
      * Return the main content to be edited.
      *
      * @return string
@@ -160,11 +220,14 @@ abstract class base_activity_adapter implements activity_adapter_interface {
     /**
      * Prepare the content for editing in draft mode.
      *
-     * @param int $draftitemid Draft file area item id.
+     * @param int|null $draftitemid Passed by reference: 0/null lets core allocate
+     *                              a new draft area and the generated id is
+     *                              written back (same contract as
+     *                              file_prepare_draft_area).
      * @param array $editoroptions Editor options.
      * @return string The draft text.
      */
-    public function prepare_draft_area(int $draftitemid, array $editoroptions): string {
+    public function prepare_draft_area(?int &$draftitemid, array $editoroptions): string {
         $contentfield = $this->get_content_field();
 
         return file_prepare_draft_area(
@@ -185,8 +248,11 @@ abstract class base_activity_adapter implements activity_adapter_interface {
      * @param int $format Content format.
      * @param int $itemid Draft item id.
      * @param array $editoroptions Editor options.
+     * @param int|null $sessionid Editor session id for draft image promotion.
      */
-    public function save_content(string $content, int $format, int $itemid, array $editoroptions): void {
+    public function save_content(string $content, int $format, int $itemid, array $editoroptions, ?int $sessionid = null): void {
+        global $USER;
+
         $contentfield = $this->get_content_field();
         $formatfield = $this->get_format_field();
 
@@ -212,7 +278,24 @@ abstract class base_activity_adapter implements activity_adapter_interface {
             );
         }
 
+        // Promote session draft images AFTER file_save_draft_area_files: that call
+        // syncs the module filearea against the user draft area and would delete
+        // any file promoted before it runs.
+        if ($sessionid !== null && $sessionid > 0) {
+            $subid = $this->get_table_name() === 'slideshow_slide' ? $this->get_record_id() : null;
+            $imagecontext = editor_image_context_factory::from_cmid((int) $this->context->instanceid, $subid, $sessionid);
+            $this->record->{$contentfield} = editor_session_promoter::finalize_on_save(
+                $this->record->{$contentfield},
+                $imagecontext,
+                (int) $USER->id
+            );
+        }
+
         $this->db->update_record($this->get_table_name(), $this->record);
+
+        if ($sessionid !== null && $sessionid > 0) {
+            editor_session_repository::finalize_saved($sessionid, $this->get_modname(), $this->context);
+        }
 
         $this->after_save();
     }

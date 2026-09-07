@@ -32,6 +32,7 @@ use local_dixeo\service\job_service;
 use local_dixeo_editor\activity\activity_adapter_factory;
 use local_dixeo_editor\external\get_regenerate_module_content_status;
 use local_dixeo_editor\local\content_sanitizer;
+use local_dixeo_editor\local\editor_session_repository;
 
 /**
  * XSS payloads must not survive sanitize / status / save paths.
@@ -154,7 +155,8 @@ final class content_sanitizer_test extends \advanced_testcase {
         service_factory::set_test_job_service(new job_service(null, $poller, $repo));
 
         $this->setUser($user);
-        $result = get_regenerate_module_content_status::execute((int) $cm->id, 'job-xss');
+        $sessionid = (int) editor_session_repository::get_or_create_active((int) $cm->id, null, (int) $user->id)->id;
+        $result = get_regenerate_module_content_status::execute((int) $cm->id, 'job-xss', $sessionid);
 
         $this->assertTrue($result['success']);
         $this->assertSame('completed', $result['data']['status']);
