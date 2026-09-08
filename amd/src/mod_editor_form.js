@@ -387,7 +387,20 @@ define([
                 sessionid: this.sessionId,
                 slideid: slideid || 0,
                 placeholderIds: placeholderIds,
-                getDoc: () => self.editorDocument,
+                getDoc: () => {
+                    // Prefer the live TinyMCE iframe; a cached doc goes stale if TinyMCE rebuilds.
+                    const textarea = document.getElementById(SELECTORS.TEXTAREA);
+                    const editor = (textarea && window.tinymce)
+                        ? window.tinymce.get(textarea.id)
+                        : null;
+                    if (editor && typeof editor.getDoc === 'function') {
+                        const live = editor.getDoc();
+                        if (live) {
+                            return live;
+                        }
+                    }
+                    return self.editorDocument;
+                },
                 getEditor: () => {
                     const textarea = document.getElementById(SELECTORS.TEXTAREA);
                     return (textarea && window.tinymce)
@@ -401,7 +414,19 @@ define([
             const self = this;
             return DraftImagePolling.updatePlaceholder(
                 item,
-                () => self.editorDocument,
+                () => {
+                    const textarea = document.getElementById(SELECTORS.TEXTAREA);
+                    const editor = (textarea && window.tinymce)
+                        ? window.tinymce.get(textarea.id)
+                        : null;
+                    if (editor && typeof editor.getDoc === 'function') {
+                        const live = editor.getDoc();
+                        if (live) {
+                            return live;
+                        }
+                    }
+                    return self.editorDocument;
+                },
                 () => {
                     const textarea = document.getElementById(SELECTORS.TEXTAREA);
                     return (textarea && window.tinymce)

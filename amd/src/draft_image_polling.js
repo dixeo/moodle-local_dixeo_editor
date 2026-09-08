@@ -41,6 +41,56 @@ define(['core/ajax', 'local_dixeo/content_image_pending'], function(Ajax, Conten
     };
 
     /**
+     * Locate a draft placeholder img in the TinyMCE iframe / body.
+     *
+     * @param {Document} doc
+     * @param {object|null} editor
+     * @param {string} placeholderid
+     * @param {string} filename
+     * @returns {HTMLImageElement|null}
+     */
+    const findPlaceholderImg = (doc, editor, placeholderid, filename) => {
+        const roots = [];
+        if (doc) {
+            roots.push(doc);
+        }
+        if (editor && typeof editor.getBody === 'function') {
+            const body = editor.getBody();
+            if (body && body.ownerDocument && body.ownerDocument !== doc) {
+                roots.push(body.ownerDocument);
+            } else if (body) {
+                roots.push(body);
+            }
+        }
+
+        const selectors = [
+            'img[data-dixeo-img-gen="' + placeholderid + '"]',
+            'img[src*="' + filename + '"]',
+            'img[data-mce-src*="' + filename + '"]',
+        ];
+
+        for (let r = 0; r < roots.length; r++) {
+            const root = roots[r];
+            for (let s = 0; s < selectors.length; s++) {
+                const found = root.querySelector(selectors[s]);
+                if (found) {
+                    return found;
+                }
+            }
+        }
+
+        if (editor && editor.dom && typeof editor.dom.select === 'function') {
+            for (let s = 0; s < selectors.length; s++) {
+                const list = editor.dom.select(selectors[s]);
+                if (list && list.length) {
+                    return list[0];
+                }
+            }
+        }
+        return null;
+    };
+
+    /**
      * Apply a terminal draft-image status item inside TinyMCE / iframe DOM.
      *
      * @param {object} item Status payload from get_editor_draft_image_status
@@ -49,15 +99,16 @@ define(['core/ajax', 'local_dixeo/content_image_pending'], function(Ajax, Conten
      * @returns {boolean}
      */
     const updatePlaceholder = (item, getDoc, getEditor) => {
-        const doc = typeof getDoc === 'function' ? getDoc() : null;
+        const editor = typeof getEditor === 'function' ? getEditor() : null;
+        let doc = typeof getDoc === 'function' ? getDoc() : null;
+        if (!doc && editor && typeof editor.getDoc === 'function') {
+            doc = editor.getDoc();
+        }
         if (!doc) {
             return false;
         }
         const filename = 'dixeo-gen-' + item.placeholderid + '.png';
-        let img = doc.querySelector('img[data-dixeo-img-gen="' + item.placeholderid + '"]');
-        if (!img) {
-            img = doc.querySelector('img[src*="' + filename + '"], img[data-mce-src*="' + filename + '"]');
-        }
+        const img = findPlaceholderImg(doc, editor, item.placeholderid, filename);
         if (!img) {
             return false;
         }
@@ -67,7 +118,6 @@ define(['core/ajax', 'local_dixeo/content_image_pending'], function(Ajax, Conten
             nextUrl = appendImageRev(nextUrl, item.contenthash);
         }
         const nextClass = item.imgclass || 'img-fluid';
-        const editor = typeof getEditor === 'function' ? getEditor() : null;
 
         if (editor && editor.dom) {
             if (nextUrl) {
@@ -99,16 +149,14 @@ define(['core/ajax', 'local_dixeo/content_image_pending'], function(Ajax, Conten
             }
         }
 
-        if (nextClass.indexOf('dixeo-img-gen-pending') === -1 &&
-                nextClass.indexOf('dixeo-img-gen-failed') === -1) {
-            let liveImg = doc.querySelector(
-                'img[data-dixeo-img-gen="' + item.placeholderid + '"]'
-            );
-            if (!liveImg) {
-                liveImg = doc.querySelector(
-                    'img[src*="' + filename + '"], img[data-mce-src*="' + filename + '"]'
-                );
-            }
+        const stillPendingOrFailed = nextClass.indexOf('dixeo-img-gen-pending') !== -1 ||
+            nextClass.indexOf('dixeo-img-gen-failed') !== -1;
+        if (stillPendingOrFailed) {
+            // MutationObserver only watches childList; class/src changes need a refresh
+            // so the failed label/shimmer host updates in the iframe.
+            ContentImagePending.refresh(doc);
+        } else {
+            const liveImg = findPlaceholderImg(doc, editor, item.placeholderid, filename);
             ContentImagePending.clearImageHost(liveImg || img);
         }
         return true;
