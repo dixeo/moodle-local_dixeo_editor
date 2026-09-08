@@ -6,8 +6,21 @@ define([
     'local_dixeo_editor/content_editor_ai_panel',
     'local_dixeo_editor/content_editor_layout',
     'tiny_autosave/repository',
-    'tiny_autosave/options'
-], function(Ajax, Templates, Notification, Str, ContentEditorAIPanel, LayoutModule, AutosaveRepository, AutosaveOptions) {
+    'tiny_autosave/options',
+    'local_dixeo/content_image_pending',
+    'local_dixeo_editor/draft_image_polling'
+], function(
+    Ajax,
+    Templates,
+    Notification,
+    Str,
+    ContentEditorAIPanel,
+    LayoutModule,
+    AutosaveRepository,
+    AutosaveOptions,
+    ContentImagePending,
+    DraftImagePolling
+) {
     'use strict';
 
     var SELECTORS = {
@@ -98,6 +111,7 @@ define([
         /**
          * Clone the parent page's theme stylesheet into the TinyMCE iframe so
          * FontAwesome (and any other content-relevant CSS) renders in-editor.
+         * Also starts pending-image shimmer enhancement inside the iframe.
          *
          * @param {number} [timeoutMs]
          */
@@ -114,16 +128,16 @@ define([
                 var iframe = document.querySelector(SELECTORS.editorIframe);
                 if (iframe && iframe.contentDocument && iframe.contentDocument.head) {
                     var doc = iframe.contentDocument;
-                    if (doc.querySelector('link[data-dixeo-theme]')) {
-                        return;
+                    if (!doc.querySelector('link[data-dixeo-theme]')) {
+                        themeLinks.forEach(function(link) {
+                            var clone = doc.createElement('link');
+                            clone.rel = 'stylesheet';
+                            clone.href = link.href;
+                            clone.setAttribute('data-dixeo-theme', '1');
+                            doc.head.appendChild(clone);
+                        });
                     }
-                    themeLinks.forEach(function(link) {
-                        var clone = doc.createElement('link');
-                        clone.rel = 'stylesheet';
-                        clone.href = link.href;
-                        clone.setAttribute('data-dixeo-theme', '1');
-                        doc.head.appendChild(clone);
-                    });
+                    ContentImagePending.init(doc);
                     return;
                 }
                 if (Date.now() - startedAt > timeout) {
@@ -680,6 +694,10 @@ define([
             this.setEditorContent(content);
             this.refreshEditorUndoRedoButtons();
             this.syncUndoRedoAvailability();
+            var doc = this.getEditorIframeDocument();
+            if (doc) {
+                ContentImagePending.refresh(doc);
+            }
             if (pendingIds && pendingIds.length) {
                 this.startDraftImagePolling(pendingIds);
             }
@@ -687,68 +705,31 @@ define([
 
         startDraftImagePolling: function(placeholderIds) {
             var self = this;
-            this.pendingPlaceholderIds = placeholderIds.slice();
-            if (this.imagePollTimer) {
-                window.clearInterval(this.imagePollTimer);
-            }
-            this.imagePollTimer = window.setInterval(function() {
-                if (!self.pendingPlaceholderIds.length) {
-                    window.clearInterval(self.imagePollTimer);
-                    self.imagePollTimer = null;
-                    return;
-                }
-                Ajax.call([{
-                    methodname: 'local_dixeo_editor_get_editor_draft_image_status',
-                    args: {
-                        cmid: self.cmid,
-                        sessionid: self.sessionId,
-                        placeholderids: self.pendingPlaceholderIds,
-                        slideid: self.slideid
-                    }
-                }])[0].then(function(response) {
-                    if (!response.success || !response.data || !response.data.items) {
-                        return undefined;
-                    }
-                    response.data.items.forEach(function(item) {
-                        if (item.status === 'pending' || item.status === 'processing') {
-                            return;
-                        }
-                        if (!self.updatePlaceholderInEditor(item)) {
-                            return;
-                        }
-                        self.pendingPlaceholderIds = self.pendingPlaceholderIds.filter(function(id) {
-                            return id !== item.placeholderid;
-                        });
-                    });
-                    return undefined;
-                }).catch(function() {
-                    // Keep polling on transient errors.
-                });
-            }, 3000);
+            DraftImagePolling.start(this, {
+                cmid: this.cmid,
+                sessionid: this.sessionId,
+                slideid: this.slideid,
+                placeholderIds: placeholderIds,
+                getDoc: function() {
+                    return self.getEditorIframeDocument();
+                },
+                getEditor: function() {
+                    return self.getModuleContentEditor();
+                },
+            });
         },
 
         updatePlaceholderInEditor: function(item) {
-            var doc = this.getEditorIframeDocument();
-            if (!doc) {
-                return false;
-            }
-            var img = doc.querySelector('img[data-dixeo-img-gen="' + item.placeholderid + '"]');
-            if (!img) {
-                var filename = 'dixeo-gen-' + item.placeholderid + '.png';
-                img = doc.querySelector('img[src*="' + filename + '"]');
-            }
-            if (!img) {
-                return false;
-            }
-            if (item.imageurl) {
-                img.setAttribute('src', item.imageurl);
-            }
-            img.setAttribute('class', item.imgclass || 'img-fluid');
-            var editor = this.getModuleContentEditor();
-            if (editor && typeof editor.save === 'function') {
-                editor.save();
-            }
-            return true;
+            var self = this;
+            return DraftImagePolling.updatePlaceholder(
+                item,
+                function() {
+                    return self.getEditorIframeDocument();
+                },
+                function() {
+                    return self.getModuleContentEditor();
+                }
+            );
         },
 
         showSuccess: function() {
