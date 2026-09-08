@@ -6,7 +6,14 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-define(['jquery', 'core/templates', 'core/notification', 'core/ajax', 'core/str'], function($, Templates, Notification, Ajax, Str) {
+define([
+    'jquery',
+    'core/templates',
+    'core/notification',
+    'core/ajax',
+    'core/str',
+    'local_dixeo/content_image_pending'
+], function($, Templates, Notification, Ajax, Str, ContentImagePending) {
     // Note: Do NOT resolve DOM elements at module load time.
     // Moodle may load this AMD module before the template markup is present.
     // Always query inside init/setup to avoid stale null references.
@@ -81,17 +88,22 @@ define(['jquery', 'core/templates', 'core/notification', 'core/ajax', 'core/str'
      * @param {Document} iframeDoc - The TinyMCE iframe's document.
      */
     function injectThemeStylesIntoEditor(iframeDoc) {
-        if (!iframeDoc || !iframeDoc.head || iframeDoc.querySelector('link[data-dixeo-theme]')) {
+        if (!iframeDoc || !iframeDoc.head) {
             return;
         }
-        const themeLinks = document.querySelectorAll('link[rel="stylesheet"][href*="/theme/styles.php"]');
-        themeLinks.forEach(link => {
-            const clone = iframeDoc.createElement('link');
-            clone.rel = 'stylesheet';
-            clone.href = link.href;
-            clone.setAttribute('data-dixeo-theme', '1');
-            iframeDoc.head.appendChild(clone);
-        });
+        if (!iframeDoc.querySelector('link[data-dixeo-theme]')) {
+            const themeLinks = document.querySelectorAll(
+                'link[rel="stylesheet"][href*="/theme/styles.php"]'
+            );
+            themeLinks.forEach(link => {
+                const clone = iframeDoc.createElement('link');
+                clone.rel = 'stylesheet';
+                clone.href = link.href;
+                clone.setAttribute('data-dixeo-theme', '1');
+                iframeDoc.head.appendChild(clone);
+            });
+        }
+        ContentImagePending.init(iframeDoc);
     }
 
     /**
@@ -253,6 +265,9 @@ define(['jquery', 'core/templates', 'core/notification', 'core/ajax', 'core/str'
                 })
                 .then(async(response) => {
                     this.applyEditorContent(response.data.content || '');
+                    if (this.editorDocument) {
+                        ContentImagePending.refresh(this.editorDocument);
+                    }
                     if (response.data.pendingplaceholderids && response.data.pendingplaceholderids.length) {
                         this.startDraftImagePolling(response.data.pendingplaceholderids, cmid, slideid);
                     }
@@ -368,11 +383,14 @@ define(['jquery', 'core/templates', 'core/notification', 'core/ajax', 'core/str'
             this.pendingPlaceholderIds = placeholderIds.slice();
             if (this.imagePollTimer) {
                 window.clearInterval(this.imagePollTimer);
+                this.imagePollTimer = null;
             }
-            this.imagePollTimer = window.setInterval(() => {
+            const pollOnce = () => {
                 if (!this.pendingPlaceholderIds.length) {
-                    window.clearInterval(this.imagePollTimer);
-                    this.imagePollTimer = null;
+                    if (this.imagePollTimer) {
+                        window.clearInterval(this.imagePollTimer);
+                        this.imagePollTimer = null;
+                    }
                     return;
                 }
                 Ajax.call([{
@@ -400,7 +418,9 @@ define(['jquery', 'core/templates', 'core/notification', 'core/ajax', 'core/str'
                 }).catch(() => {
                     // Keep polling on transient errors.
                 });
-            }, 3000);
+            };
+            pollOnce();
+            this.imagePollTimer = window.setInterval(pollOnce, 3000);
         },
 
         updatePlaceholderInEditor: function(item) {
@@ -408,24 +428,65 @@ define(['jquery', 'core/templates', 'core/notification', 'core/ajax', 'core/str'
             if (!doc) {
                 return false;
             }
+            const filename = 'dixeo-gen-' + item.placeholderid + '.png';
             let img = doc.querySelector('img[data-dixeo-img-gen="' + item.placeholderid + '"]');
             if (!img) {
-                const filename = 'dixeo-gen-' + item.placeholderid + '.png';
-                img = doc.querySelector('img[src*="' + filename + '"]');
+                img = doc.querySelector('img[src*="' + filename + '"], img[data-mce-src*="' + filename + '"]');
             }
             if (!img) {
                 return false;
             }
-            if (item.imageurl) {
-                img.setAttribute('src', item.imageurl);
+            let nextUrl = item.imageurl || '';
+            if (item.contenthash && nextUrl) {
+                nextUrl = nextUrl.replace(/([?&])rev=[^&]*/g, '$1').replace(/[?&]$/, '');
+                nextUrl += (nextUrl.indexOf('?') >= 0 ? '&' : '?') + 'rev=' + encodeURIComponent(item.contenthash);
             }
-            img.setAttribute('class', item.imgclass || 'img-fluid');
+            const nextClass = item.imgclass || 'img-fluid';
             const textarea = document.getElementById(SELECTORS.TEXTAREA);
-            if (textarea && window.tinymce) {
-                const editor = window.tinymce.get(textarea.id);
-                if (editor && typeof editor.save === 'function') {
+            const editor = (textarea && window.tinymce)
+                ? window.tinymce.get(textarea.id)
+                : null;
+            if (editor && editor.dom) {
+                if (nextUrl) {
+                    editor.dom.setAttrib(img, 'src', nextUrl);
+                    editor.dom.setAttrib(img, 'data-mce-src', nextUrl);
+                }
+                editor.dom.setAttrib(img, 'class', nextClass);
+                if (item.contenthash) {
+                    editor.dom.setAttrib(img, 'data-dixeo-contenthash', item.contenthash);
+                } else {
+                    editor.dom.setAttrib(img, 'data-dixeo-contenthash', null);
+                }
+                if (typeof editor.nodeChanged === 'function') {
+                    editor.nodeChanged();
+                }
+                if (typeof editor.save === 'function') {
                     editor.save();
                 }
+            } else {
+                if (nextUrl) {
+                    img.setAttribute('src', nextUrl);
+                    img.setAttribute('data-mce-src', nextUrl);
+                }
+                img.setAttribute('class', nextClass);
+                if (item.contenthash) {
+                    img.setAttribute('data-dixeo-contenthash', item.contenthash);
+                } else {
+                    img.removeAttribute('data-dixeo-contenthash');
+                }
+            }
+            if (nextClass.indexOf('dixeo-img-gen-pending') === -1 &&
+                    nextClass.indexOf('dixeo-img-gen-failed') === -1) {
+                // Re-query: TinyMCE may have replaced the live node during setAttrib/save.
+                let liveImg = doc.querySelector(
+                    'img[data-dixeo-img-gen="' + item.placeholderid + '"]'
+                );
+                if (!liveImg) {
+                    liveImg = doc.querySelector(
+                        'img[src*="' + filename + '"], img[data-mce-src*="' + filename + '"]'
+                    );
+                }
+                ContentImagePending.clearImageHost(liveImg || img);
             }
             return true;
         },

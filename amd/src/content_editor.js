@@ -6,8 +6,19 @@ define([
     'local_dixeo_editor/content_editor_ai_panel',
     'local_dixeo_editor/content_editor_layout',
     'tiny_autosave/repository',
-    'tiny_autosave/options'
-], function(Ajax, Templates, Notification, Str, ContentEditorAIPanel, LayoutModule, AutosaveRepository, AutosaveOptions) {
+    'tiny_autosave/options',
+    'local_dixeo/content_image_pending'
+], function(
+    Ajax,
+    Templates,
+    Notification,
+    Str,
+    ContentEditorAIPanel,
+    LayoutModule,
+    AutosaveRepository,
+    AutosaveOptions,
+    ContentImagePending
+) {
     'use strict';
 
     var SELECTORS = {
@@ -98,6 +109,7 @@ define([
         /**
          * Clone the parent page's theme stylesheet into the TinyMCE iframe so
          * FontAwesome (and any other content-relevant CSS) renders in-editor.
+         * Also starts pending-image shimmer enhancement inside the iframe.
          *
          * @param {number} [timeoutMs]
          */
@@ -114,16 +126,16 @@ define([
                 var iframe = document.querySelector(SELECTORS.editorIframe);
                 if (iframe && iframe.contentDocument && iframe.contentDocument.head) {
                     var doc = iframe.contentDocument;
-                    if (doc.querySelector('link[data-dixeo-theme]')) {
-                        return;
+                    if (!doc.querySelector('link[data-dixeo-theme]')) {
+                        themeLinks.forEach(function(link) {
+                            var clone = doc.createElement('link');
+                            clone.rel = 'stylesheet';
+                            clone.href = link.href;
+                            clone.setAttribute('data-dixeo-theme', '1');
+                            doc.head.appendChild(clone);
+                        });
                     }
-                    themeLinks.forEach(function(link) {
-                        var clone = doc.createElement('link');
-                        clone.rel = 'stylesheet';
-                        clone.href = link.href;
-                        clone.setAttribute('data-dixeo-theme', '1');
-                        doc.head.appendChild(clone);
-                    });
+                    ContentImagePending.init(doc);
                     return;
                 }
                 if (Date.now() - startedAt > timeout) {
@@ -680,6 +692,10 @@ define([
             this.setEditorContent(content);
             this.refreshEditorUndoRedoButtons();
             this.syncUndoRedoAvailability();
+            var doc = this.getEditorIframeDocument();
+            if (doc) {
+                ContentImagePending.refresh(doc);
+            }
             if (pendingIds && pendingIds.length) {
                 this.startDraftImagePolling(pendingIds);
             }
@@ -690,11 +706,14 @@ define([
             this.pendingPlaceholderIds = placeholderIds.slice();
             if (this.imagePollTimer) {
                 window.clearInterval(this.imagePollTimer);
+                this.imagePollTimer = null;
             }
-            this.imagePollTimer = window.setInterval(function() {
+            var pollOnce = function() {
                 if (!self.pendingPlaceholderIds.length) {
-                    window.clearInterval(self.imagePollTimer);
-                    self.imagePollTimer = null;
+                    if (self.imagePollTimer) {
+                        window.clearInterval(self.imagePollTimer);
+                        self.imagePollTimer = null;
+                    }
                     return;
                 }
                 Ajax.call([{
@@ -724,7 +743,9 @@ define([
                 }).catch(function() {
                     // Keep polling on transient errors.
                 });
-            }, 3000);
+            };
+            pollOnce();
+            this.imagePollTimer = window.setInterval(pollOnce, 3000);
         },
 
         updatePlaceholderInEditor: function(item) {
@@ -732,21 +753,62 @@ define([
             if (!doc) {
                 return false;
             }
+            var filename = 'dixeo-gen-' + item.placeholderid + '.png';
             var img = doc.querySelector('img[data-dixeo-img-gen="' + item.placeholderid + '"]');
             if (!img) {
-                var filename = 'dixeo-gen-' + item.placeholderid + '.png';
-                img = doc.querySelector('img[src*="' + filename + '"]');
+                img = doc.querySelector('img[src*="' + filename + '"], img[data-mce-src*="' + filename + '"]');
             }
             if (!img) {
                 return false;
             }
-            if (item.imageurl) {
-                img.setAttribute('src', item.imageurl);
+            var nextUrl = item.imageurl || '';
+            if (item.contenthash && nextUrl) {
+                nextUrl = nextUrl.replace(/([?&])rev=[^&]*/g, '$1').replace(/[?&]$/, '');
+                nextUrl += (nextUrl.indexOf('?') >= 0 ? '&' : '?') + 'rev=' + encodeURIComponent(item.contenthash);
             }
-            img.setAttribute('class', item.imgclass || 'img-fluid');
+            var nextClass = item.imgclass || 'img-fluid';
             var editor = this.getModuleContentEditor();
-            if (editor && typeof editor.save === 'function') {
-                editor.save();
+            if (editor && editor.dom) {
+                if (nextUrl) {
+                    editor.dom.setAttrib(img, 'src', nextUrl);
+                    editor.dom.setAttrib(img, 'data-mce-src', nextUrl);
+                }
+                editor.dom.setAttrib(img, 'class', nextClass);
+                if (item.contenthash) {
+                    editor.dom.setAttrib(img, 'data-dixeo-contenthash', item.contenthash);
+                } else {
+                    editor.dom.setAttrib(img, 'data-dixeo-contenthash', null);
+                }
+                if (typeof editor.nodeChanged === 'function') {
+                    editor.nodeChanged();
+                }
+                if (typeof editor.save === 'function') {
+                    editor.save();
+                }
+            } else {
+                if (nextUrl) {
+                    img.setAttribute('src', nextUrl);
+                    img.setAttribute('data-mce-src', nextUrl);
+                }
+                img.setAttribute('class', nextClass);
+                if (item.contenthash) {
+                    img.setAttribute('data-dixeo-contenthash', item.contenthash);
+                } else {
+                    img.removeAttribute('data-dixeo-contenthash');
+                }
+            }
+            if (nextClass.indexOf('dixeo-img-gen-pending') === -1 &&
+                    nextClass.indexOf('dixeo-img-gen-failed') === -1) {
+                // Re-query: TinyMCE may have replaced the live node during setAttrib/save.
+                var liveImg = doc.querySelector(
+                    'img[data-dixeo-img-gen="' + item.placeholderid + '"]'
+                );
+                if (!liveImg) {
+                    liveImg = doc.querySelector(
+                        'img[src*="' + filename + '"], img[data-mce-src*="' + filename + '"]'
+                    );
+                }
+                ContentImagePending.clearImageHost(liveImg || img);
             }
             return true;
         },
