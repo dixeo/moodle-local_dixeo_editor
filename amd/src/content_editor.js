@@ -7,7 +7,8 @@ define([
     'local_dixeo_editor/content_editor_layout',
     'tiny_autosave/repository',
     'tiny_autosave/options',
-    'local_dixeo/content_image_pending'
+    'local_dixeo/content_image_pending',
+    'local_dixeo_editor/draft_image_polling'
 ], function(
     Ajax,
     Templates,
@@ -17,7 +18,8 @@ define([
     LayoutModule,
     AutosaveRepository,
     AutosaveOptions,
-    ContentImagePending
+    ContentImagePending,
+    DraftImagePolling
 ) {
     'use strict';
 
@@ -703,114 +705,31 @@ define([
 
         startDraftImagePolling: function(placeholderIds) {
             var self = this;
-            this.pendingPlaceholderIds = placeholderIds.slice();
-            if (this.imagePollTimer) {
-                window.clearInterval(this.imagePollTimer);
-                this.imagePollTimer = null;
-            }
-            var pollOnce = function() {
-                if (!self.pendingPlaceholderIds.length) {
-                    if (self.imagePollTimer) {
-                        window.clearInterval(self.imagePollTimer);
-                        self.imagePollTimer = null;
-                    }
-                    return;
-                }
-                Ajax.call([{
-                    methodname: 'local_dixeo_editor_get_editor_draft_image_status',
-                    args: {
-                        cmid: self.cmid,
-                        sessionid: self.sessionId,
-                        placeholderids: self.pendingPlaceholderIds,
-                        slideid: self.slideid
-                    }
-                }])[0].then(function(response) {
-                    if (!response.success || !response.data || !response.data.items) {
-                        return undefined;
-                    }
-                    response.data.items.forEach(function(item) {
-                        if (item.status === 'pending' || item.status === 'processing') {
-                            return;
-                        }
-                        if (!self.updatePlaceholderInEditor(item)) {
-                            return;
-                        }
-                        self.pendingPlaceholderIds = self.pendingPlaceholderIds.filter(function(id) {
-                            return id !== item.placeholderid;
-                        });
-                    });
-                    return undefined;
-                }).catch(function() {
-                    // Keep polling on transient errors.
-                });
-            };
-            pollOnce();
-            this.imagePollTimer = window.setInterval(pollOnce, 3000);
+            DraftImagePolling.start(this, {
+                cmid: this.cmid,
+                sessionid: this.sessionId,
+                slideid: this.slideid,
+                placeholderIds: placeholderIds,
+                getDoc: function() {
+                    return self.getEditorIframeDocument();
+                },
+                getEditor: function() {
+                    return self.getModuleContentEditor();
+                },
+            });
         },
 
         updatePlaceholderInEditor: function(item) {
-            var doc = this.getEditorIframeDocument();
-            if (!doc) {
-                return false;
-            }
-            var filename = 'dixeo-gen-' + item.placeholderid + '.png';
-            var img = doc.querySelector('img[data-dixeo-img-gen="' + item.placeholderid + '"]');
-            if (!img) {
-                img = doc.querySelector('img[src*="' + filename + '"], img[data-mce-src*="' + filename + '"]');
-            }
-            if (!img) {
-                return false;
-            }
-            var nextUrl = item.imageurl || '';
-            if (item.contenthash && nextUrl) {
-                nextUrl = nextUrl.replace(/([?&])rev=[^&]*/g, '$1').replace(/[?&]$/, '');
-                nextUrl += (nextUrl.indexOf('?') >= 0 ? '&' : '?') + 'rev=' + encodeURIComponent(item.contenthash);
-            }
-            var nextClass = item.imgclass || 'img-fluid';
-            var editor = this.getModuleContentEditor();
-            if (editor && editor.dom) {
-                if (nextUrl) {
-                    editor.dom.setAttrib(img, 'src', nextUrl);
-                    editor.dom.setAttrib(img, 'data-mce-src', nextUrl);
+            var self = this;
+            return DraftImagePolling.updatePlaceholder(
+                item,
+                function() {
+                    return self.getEditorIframeDocument();
+                },
+                function() {
+                    return self.getModuleContentEditor();
                 }
-                editor.dom.setAttrib(img, 'class', nextClass);
-                if (item.contenthash) {
-                    editor.dom.setAttrib(img, 'data-dixeo-contenthash', item.contenthash);
-                } else {
-                    editor.dom.setAttrib(img, 'data-dixeo-contenthash', null);
-                }
-                if (typeof editor.nodeChanged === 'function') {
-                    editor.nodeChanged();
-                }
-                if (typeof editor.save === 'function') {
-                    editor.save();
-                }
-            } else {
-                if (nextUrl) {
-                    img.setAttribute('src', nextUrl);
-                    img.setAttribute('data-mce-src', nextUrl);
-                }
-                img.setAttribute('class', nextClass);
-                if (item.contenthash) {
-                    img.setAttribute('data-dixeo-contenthash', item.contenthash);
-                } else {
-                    img.removeAttribute('data-dixeo-contenthash');
-                }
-            }
-            if (nextClass.indexOf('dixeo-img-gen-pending') === -1 &&
-                    nextClass.indexOf('dixeo-img-gen-failed') === -1) {
-                // Re-query: TinyMCE may have replaced the live node during setAttrib/save.
-                var liveImg = doc.querySelector(
-                    'img[data-dixeo-img-gen="' + item.placeholderid + '"]'
-                );
-                if (!liveImg) {
-                    liveImg = doc.querySelector(
-                        'img[src*="' + filename + '"], img[data-mce-src*="' + filename + '"]'
-                    );
-                }
-                ContentImagePending.clearImageHost(liveImg || img);
-            }
-            return true;
+            );
         },
 
         showSuccess: function() {

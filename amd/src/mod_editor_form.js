@@ -12,8 +12,9 @@ define([
     'core/notification',
     'core/ajax',
     'core/str',
-    'local_dixeo/content_image_pending'
-], function($, Templates, Notification, Ajax, Str, ContentImagePending) {
+    'local_dixeo/content_image_pending',
+    'local_dixeo_editor/draft_image_polling'
+], function($, Templates, Notification, Ajax, Str, ContentImagePending, DraftImagePolling) {
     // Note: Do NOT resolve DOM elements at module load time.
     // Moodle may load this AMD module before the template markup is present.
     // Always query inside init/setup to avoid stale null references.
@@ -380,115 +381,34 @@ define([
         },
 
         startDraftImagePolling: function(placeholderIds, cmid, slideid) {
-            this.pendingPlaceholderIds = placeholderIds.slice();
-            if (this.imagePollTimer) {
-                window.clearInterval(this.imagePollTimer);
-                this.imagePollTimer = null;
-            }
-            const pollOnce = () => {
-                if (!this.pendingPlaceholderIds.length) {
-                    if (this.imagePollTimer) {
-                        window.clearInterval(this.imagePollTimer);
-                        this.imagePollTimer = null;
-                    }
-                    return;
-                }
-                Ajax.call([{
-                    methodname: 'local_dixeo_editor_get_editor_draft_image_status',
-                    args: {
-                        cmid: cmid,
-                        sessionid: this.sessionId,
-                        placeholderids: this.pendingPlaceholderIds,
-                        slideid: slideid || 0
-                    }
-                }])[0].then((response) => {
-                    if (!response.success || !response.data || !response.data.items) {
-                        return undefined;
-                    }
-                    response.data.items.forEach((item) => {
-                        if (item.status === 'pending' || item.status === 'processing') {
-                            return;
-                        }
-                        if (!this.updatePlaceholderInEditor(item)) {
-                            return;
-                        }
-                        this.pendingPlaceholderIds = this.pendingPlaceholderIds.filter((id) => id !== item.placeholderid);
-                    });
-                    return undefined;
-                }).catch(() => {
-                    // Keep polling on transient errors.
-                });
-            };
-            pollOnce();
-            this.imagePollTimer = window.setInterval(pollOnce, 3000);
+            const self = this;
+            DraftImagePolling.start(this, {
+                cmid: cmid,
+                sessionid: this.sessionId,
+                slideid: slideid || 0,
+                placeholderIds: placeholderIds,
+                getDoc: () => self.editorDocument,
+                getEditor: () => {
+                    const textarea = document.getElementById(SELECTORS.TEXTAREA);
+                    return (textarea && window.tinymce)
+                        ? window.tinymce.get(textarea.id)
+                        : null;
+                },
+            });
         },
 
         updatePlaceholderInEditor: function(item) {
-            const doc = this.editorDocument;
-            if (!doc) {
-                return false;
-            }
-            const filename = 'dixeo-gen-' + item.placeholderid + '.png';
-            let img = doc.querySelector('img[data-dixeo-img-gen="' + item.placeholderid + '"]');
-            if (!img) {
-                img = doc.querySelector('img[src*="' + filename + '"], img[data-mce-src*="' + filename + '"]');
-            }
-            if (!img) {
-                return false;
-            }
-            let nextUrl = item.imageurl || '';
-            if (item.contenthash && nextUrl) {
-                nextUrl = nextUrl.replace(/([?&])rev=[^&]*/g, '$1').replace(/[?&]$/, '');
-                nextUrl += (nextUrl.indexOf('?') >= 0 ? '&' : '?') + 'rev=' + encodeURIComponent(item.contenthash);
-            }
-            const nextClass = item.imgclass || 'img-fluid';
-            const textarea = document.getElementById(SELECTORS.TEXTAREA);
-            const editor = (textarea && window.tinymce)
-                ? window.tinymce.get(textarea.id)
-                : null;
-            if (editor && editor.dom) {
-                if (nextUrl) {
-                    editor.dom.setAttrib(img, 'src', nextUrl);
-                    editor.dom.setAttrib(img, 'data-mce-src', nextUrl);
+            const self = this;
+            return DraftImagePolling.updatePlaceholder(
+                item,
+                () => self.editorDocument,
+                () => {
+                    const textarea = document.getElementById(SELECTORS.TEXTAREA);
+                    return (textarea && window.tinymce)
+                        ? window.tinymce.get(textarea.id)
+                        : null;
                 }
-                editor.dom.setAttrib(img, 'class', nextClass);
-                if (item.contenthash) {
-                    editor.dom.setAttrib(img, 'data-dixeo-contenthash', item.contenthash);
-                } else {
-                    editor.dom.setAttrib(img, 'data-dixeo-contenthash', null);
-                }
-                if (typeof editor.nodeChanged === 'function') {
-                    editor.nodeChanged();
-                }
-                if (typeof editor.save === 'function') {
-                    editor.save();
-                }
-            } else {
-                if (nextUrl) {
-                    img.setAttribute('src', nextUrl);
-                    img.setAttribute('data-mce-src', nextUrl);
-                }
-                img.setAttribute('class', nextClass);
-                if (item.contenthash) {
-                    img.setAttribute('data-dixeo-contenthash', item.contenthash);
-                } else {
-                    img.removeAttribute('data-dixeo-contenthash');
-                }
-            }
-            if (nextClass.indexOf('dixeo-img-gen-pending') === -1 &&
-                    nextClass.indexOf('dixeo-img-gen-failed') === -1) {
-                // Re-query: TinyMCE may have replaced the live node during setAttrib/save.
-                let liveImg = doc.querySelector(
-                    'img[data-dixeo-img-gen="' + item.placeholderid + '"]'
-                );
-                if (!liveImg) {
-                    liveImg = doc.querySelector(
-                        'img[src*="' + filename + '"], img[data-mce-src*="' + filename + '"]'
-                    );
-                }
-                ContentImagePending.clearImageHost(liveImg || img);
-            }
-            return true;
+            );
         },
 
         discardSessionAndLeave: function(targetUrl) {
