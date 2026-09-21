@@ -91,6 +91,82 @@ define(['core/ajax', 'local_dixeo/content_image_pending'], function(Ajax, Conten
     };
 
     /**
+     * Resolve TinyMCE editor + document from host callbacks.
+     *
+     * @param {function(): (Document|null)} getDoc
+     * @param {function(): (object|null)} getEditor
+     * @returns {{editor: object|null, doc: Document}|null}
+     */
+    const resolveEditorDoc = (getDoc, getEditor) => {
+        const editor = typeof getEditor === 'function' ? getEditor() : null;
+        let doc = typeof getDoc === 'function' ? getDoc() : null;
+        if (!doc && editor && typeof editor.getDoc === 'function') {
+            doc = editor.getDoc();
+        }
+        return doc ? {editor: editor, doc: doc} : null;
+    };
+
+    /**
+     * Write src/class/contenthash onto a placeholder img (TinyMCE or native DOM).
+     *
+     * @param {HTMLImageElement} img
+     * @param {object|null} editor
+     * @param {string} nextUrl
+     * @param {string} nextClass
+     * @param {string} contenthash
+     */
+    const applyPlaceholderAttrs = (img, editor, nextUrl, nextClass, contenthash) => {
+        if (editor && editor.dom) {
+            if (nextUrl) {
+                editor.dom.setAttrib(img, 'src', nextUrl);
+                editor.dom.setAttrib(img, 'data-mce-src', nextUrl);
+            }
+            editor.dom.setAttrib(img, 'class', nextClass);
+            editor.dom.setAttrib(img, 'data-dixeo-contenthash', contenthash || null);
+            if (typeof editor.nodeChanged === 'function') {
+                editor.nodeChanged();
+            }
+            if (typeof editor.save === 'function') {
+                editor.save();
+            }
+            return;
+        }
+        if (nextUrl) {
+            img.setAttribute('src', nextUrl);
+            img.setAttribute('data-mce-src', nextUrl);
+        }
+        img.setAttribute('class', nextClass);
+        if (contenthash) {
+            img.setAttribute('data-dixeo-contenthash', contenthash);
+        } else {
+            img.removeAttribute('data-dixeo-contenthash');
+        }
+    };
+
+    /**
+     * Refresh pending UI or clear the host after a terminal status update.
+     *
+     * @param {Document} doc
+     * @param {object|null} editor
+     * @param {HTMLImageElement} img
+     * @param {string} placeholderid
+     * @param {string} filename
+     * @param {string} nextClass
+     */
+    const syncPendingHost = (doc, editor, img, placeholderid, filename, nextClass) => {
+        const stillPendingOrFailed = nextClass.indexOf('dixeo-img-gen-pending') !== -1 ||
+            nextClass.indexOf('dixeo-img-gen-failed') !== -1;
+        if (stillPendingOrFailed) {
+            // MutationObserver only watches childList; class/src changes need a refresh
+            // so the failed label/shimmer host updates in the iframe.
+            ContentImagePending.refresh(doc);
+            return;
+        }
+        const liveImg = findPlaceholderImg(doc, editor, placeholderid, filename);
+        ContentImagePending.clearImageHost(liveImg || img);
+    };
+
+    /**
      * Apply a terminal draft-image status item inside TinyMCE / iframe DOM.
      *
      * @param {object} item Status payload from get_editor_draft_image_status
@@ -99,14 +175,11 @@ define(['core/ajax', 'local_dixeo/content_image_pending'], function(Ajax, Conten
      * @returns {boolean}
      */
     const updatePlaceholder = (item, getDoc, getEditor) => {
-        const editor = typeof getEditor === 'function' ? getEditor() : null;
-        let doc = typeof getDoc === 'function' ? getDoc() : null;
-        if (!doc && editor && typeof editor.getDoc === 'function') {
-            doc = editor.getDoc();
-        }
-        if (!doc) {
+        const resolved = resolveEditorDoc(getDoc, getEditor);
+        if (!resolved) {
             return false;
         }
+        const {editor, doc} = resolved;
         const filename = 'dixeo-gen-' + item.placeholderid + '.png';
         const img = findPlaceholderImg(doc, editor, item.placeholderid, filename);
         if (!img) {
@@ -118,47 +191,8 @@ define(['core/ajax', 'local_dixeo/content_image_pending'], function(Ajax, Conten
             nextUrl = appendImageRev(nextUrl, item.contenthash);
         }
         const nextClass = item.imgclass || 'img-fluid';
-
-        if (editor && editor.dom) {
-            if (nextUrl) {
-                editor.dom.setAttrib(img, 'src', nextUrl);
-                editor.dom.setAttrib(img, 'data-mce-src', nextUrl);
-            }
-            editor.dom.setAttrib(img, 'class', nextClass);
-            if (item.contenthash) {
-                editor.dom.setAttrib(img, 'data-dixeo-contenthash', item.contenthash);
-            } else {
-                editor.dom.setAttrib(img, 'data-dixeo-contenthash', null);
-            }
-            if (typeof editor.nodeChanged === 'function') {
-                editor.nodeChanged();
-            }
-            if (typeof editor.save === 'function') {
-                editor.save();
-            }
-        } else {
-            if (nextUrl) {
-                img.setAttribute('src', nextUrl);
-                img.setAttribute('data-mce-src', nextUrl);
-            }
-            img.setAttribute('class', nextClass);
-            if (item.contenthash) {
-                img.setAttribute('data-dixeo-contenthash', item.contenthash);
-            } else {
-                img.removeAttribute('data-dixeo-contenthash');
-            }
-        }
-
-        const stillPendingOrFailed = nextClass.indexOf('dixeo-img-gen-pending') !== -1 ||
-            nextClass.indexOf('dixeo-img-gen-failed') !== -1;
-        if (stillPendingOrFailed) {
-            // MutationObserver only watches childList; class/src changes need a refresh
-            // so the failed label/shimmer host updates in the iframe.
-            ContentImagePending.refresh(doc);
-        } else {
-            const liveImg = findPlaceholderImg(doc, editor, item.placeholderid, filename);
-            ContentImagePending.clearImageHost(liveImg || img);
-        }
+        applyPlaceholderAttrs(img, editor, nextUrl, nextClass, item.contenthash || '');
+        syncPendingHost(doc, editor, img, item.placeholderid, filename, nextClass);
         return true;
     };
 
