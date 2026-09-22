@@ -114,11 +114,22 @@ class get_editor_draft_image_status extends external_api {
                 $imgclass .= ' dixeo-img-gen-failed';
             }
 
+            $imageurl = (string) ($statuspayload['imageurl'] ?? url_helper::get_current_image_url($draftloc));
+            $contenthash = (string) ($statuspayload['current_contenthash'] ?? '');
+            if ($contenthash === '') {
+                $stored = $draftloc->get_stored_file();
+                $contenthash = $stored ? $stored->get_contenthash() : '';
+            }
+            if ($contenthash !== '') {
+                $imageurl = url_helper::append_image_rev($imageurl, $contenthash);
+            }
+
             $items[] = [
                 'placeholderid' => $placeholderid,
                 'status' => (string) $statuspayload['status'],
-                'imageurl' => (string) ($statuspayload['imageurl'] ?? url_helper::get_current_image_url($draftloc)),
+                'imageurl' => $imageurl,
                 'imgclass' => $imgclass,
+                'contenthash' => $contenthash,
                 'errormessage' => (string) ($statuspayload['errormessage'] ?? ''),
             ];
         }
@@ -143,6 +154,7 @@ class get_editor_draft_image_status extends external_api {
                     'status' => new external_value(PARAM_ALPHA, 'Job status'),
                     'imageurl' => new external_value(PARAM_URL, 'Image URL', VALUE_OPTIONAL),
                     'imgclass' => new external_value(PARAM_RAW, 'CSS classes'),
+                    'contenthash' => new external_value(PARAM_ALPHANUM, 'File contenthash', VALUE_OPTIONAL),
                     'errormessage' => new external_value(PARAM_RAW, 'Error message', VALUE_OPTIONAL),
                 ])),
             ], 'Data', VALUE_OPTIONAL),
