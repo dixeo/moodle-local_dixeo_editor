@@ -6,7 +6,7 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-define(['core/str'], function(str) {
+define(['core/str', 'core/config'], function(str, Config) {
     return {
         init: async function() {
             // Check editing mode.
@@ -37,7 +37,7 @@ define(['core/str'], function(str) {
                 }
 
                 // Build the URL to your plugin's content edition page.
-                const editUrl = `${M.cfg.wwwroot}/local/dixeo_editor/content_edition.php?cmid=${cmid}`;
+                const editUrl = Config.wwwroot + '/local/dixeo_editor/content_edition.php?cmid=' + cmid;
 
                 const item = document.createElement('a');
                 item.href = editUrl;

@@ -72,6 +72,11 @@
     min-width: 100%;
 }
 
+/* Bootstrap 5 sets width: 100% on every .row child, which keeps the hidden label column's space. */
+#page-local-dixeo_editor-content_edition #content_editor .row > * {
+    width: auto;
+}
+
 /* TinyMCE */
 #page-local-dixeo_editor-content_edition #content_editor #fitem_id_modulecontent {
     flex-grow: 1;
@@ -223,6 +228,10 @@ body#page-local-dixeo_editor-content:not(.dixeo-editor-layout-docked) #page-wrap
 
 #page-local-dixeo_editor-content #dixeo_editor_layout_root.dixeo-editor-layout-mode-float #dixeo_editor_panel {
     pointer-events: auto;
+}
+
+#page-local-dixeo_editor-content #content_editor .row > * {
+    width: auto;
 }
 
 #page-local-dixeo_editor-content #content_editor {
