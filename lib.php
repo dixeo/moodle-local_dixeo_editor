@@ -23,8 +23,6 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
-
 use local_dixeo_editor\local\editor_capability;
 
 /** @var string Path to the content edition page. */
@@ -90,12 +88,6 @@ function local_dixeo_editor_pluginfile(
     send_stored_file($file, 0, 0, $forcedownload, $options);
 }
 
-global $PAGE;
-if (isset($PAGE) && strpos($PAGE->pagetype, 'course-view') === 0 && $PAGE->user_is_editing()) {
-    // Enqueue our module on course view when editing mode is enabled.
-    $PAGE->requires->js_call_amd('local_dixeo_editor/action_menu_edit', 'init');
-}
-
 /**
  * Extend course navigation with Dixeo editor hooks when editing a page activity.
  *
@@ -105,6 +97,11 @@ if (isset($PAGE) && strpos($PAGE->pagetype, 'course-view') === 0 && $PAGE->user_
  */
 function local_dixeo_editor_extend_navigation_course(navigation_node $navigation, stdClass $course, context $context) {
     global $PAGE;
+
+    // The course edit menu needs a page context, which this callback receives.
+    if (strpos($PAGE->pagetype, 'course-view') === 0 && $PAGE->user_is_editing()) {
+        $PAGE->requires->js_call_amd('local_dixeo_editor/action_menu_edit', 'init');
+    }
 
     if (
         $PAGE->cm !== null && $PAGE->cm->modname === 'page'
