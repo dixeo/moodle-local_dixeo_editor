@@ -98,6 +98,11 @@ function local_dixeo_editor_pluginfile(
 function local_dixeo_editor_extend_navigation_course(navigation_node $navigation, stdClass $course, context $context) {
     global $PAGE;
 
+    // The editor is a Dixeo feature, so its scripts stay unloaded while Dixeo is off.
+    if (!\local_dixeo\external\service_factory::get_settings_config()->enabled_for($context)) {
+        return;
+    }
+
     // The course edit menu needs a page context, which this callback receives.
     if (strpos($PAGE->pagetype, 'course-view') === 0 && $PAGE->user_is_editing()) {
         $PAGE->requires->js_call_amd('local_dixeo_editor/action_menu_edit', 'init');
@@ -126,6 +131,15 @@ function local_dixeo_editor_add_button_to_context_header($page) {
     global $OUTPUT;
 
     $editicon = '';
+
+    // The edit button is a Dixeo feature, so it is omitted while Dixeo is off.
+    $courseid = (int) ($page->course->id ?? 0);
+    $dixeocontext = $courseid > SITEID
+        ? \context_course::instance($courseid)
+        : \context_system::instance();
+    if (!\local_dixeo\external\service_factory::get_settings_config()->enabled_for($dixeocontext)) {
+        return $editicon;
+    }
 
     if ($page->cm->modname !== 'page') {
         return $editicon;
@@ -165,6 +179,15 @@ function local_dixeo_editor_add_button_to_activity_menu($page) {
     global $OUTPUT;
 
     $actions = [];
+
+    // The edit button is a Dixeo feature, so it is omitted while Dixeo is off.
+    $courseid = (int) ($page->course->id ?? 0);
+    $dixeocontext = $courseid > SITEID
+        ? \context_course::instance($courseid)
+        : \context_system::instance();
+    if (!\local_dixeo\external\service_factory::get_settings_config()->enabled_for($dixeocontext)) {
+        return $actions;
+    }
 
     if ($page->cm->modname !== 'page') {
         return $actions;
