@@ -131,6 +131,7 @@ echo $OUTPUT->render_from_template('local_dixeo_editor/mod_content_editor', [
     'cmid' => $cm->id,
     'activityname' => $cm->name,
     'cancelurl' => $activityadapter->get_redirect_url($course->id, $cmid),
+    'showheader' => true,
 ]);
 
 $PAGE->requires->js_call_amd('local_dixeo_editor/mod_editor_form', 'init', [
