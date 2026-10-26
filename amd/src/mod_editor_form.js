@@ -129,6 +129,32 @@ define([
 
     return {
         init: function(cmid, slideid, sessionid) {
+            this.embedded = false;
+            this.sessionId = sessionid || 0;
+            this.pendingPlaceholderIds = [];
+            this.imagePollTimer = null;
+            return waitForEditorIframe()
+                .then((iframeDoc) => {
+                    this.editorDocument = iframeDoc;
+                    injectThemeStylesIntoEditor(iframeDoc);
+                    this.setupEventListeners(cmid, slideid);
+                    return undefined;
+                })
+                .catch(Notification.exception);
+        },
+
+        /**
+         * Wire the AI prompt bar when the editor is inside another page's modal.
+         *
+         * The host page provides save and cancel, so the editor header is absent.
+         *
+         * @param {number} cmid Course module id
+         * @param {number|null} slideid Slide row id
+         * @param {number} sessionid Editor session id
+         * @returns {Promise}
+         */
+        initEmbedded: function(cmid, slideid, sessionid) {
+            this.embedded = true;
             this.sessionId = sessionid || 0;
             this.pendingPlaceholderIds = [];
             this.imagePollTimer = null;
@@ -158,8 +184,11 @@ define([
             const instructionsArea = document.getElementById('instructions');
             const successContainer = document.getElementById('success_message_container');
 
-            if (!generateButton || !applyButton || !cancelButton || !loader || !instructionsArea || !successContainer) {
-                // Fail fast with a clear message if the UI is not fully present.
+            if (!generateButton || !loader || !instructionsArea || !successContainer) {
+                Notification.exception(new Error('Editor UI initialisation failed: missing DOM elements.'));
+                return;
+            }
+            if (!this.embedded && (!applyButton || !cancelButton)) {
                 Notification.exception(new Error('Editor UI initialisation failed: missing DOM elements.'));
                 return;
             }
@@ -169,12 +198,15 @@ define([
                 successContainer.classList.replace('d-flex', 'd-none');
             });
 
-            applyButton.addEventListener('click', () => {
-                submitModEditorForm();
-            });
+            if (applyButton) {
+                applyButton.addEventListener('click', () => {
+                    submitModEditorForm();
+                });
+            }
 
             // Display confirm modal when clicking on the cancel button.
-            cancelButton.addEventListener('click', (event) => {
+            if (cancelButton) {
+                cancelButton.addEventListener('click', (event) => {
                 event.preventDefault();
                 const cancelUrl = cancelButton.href;
                 Promise.all([
@@ -194,7 +226,8 @@ define([
                     );
                     return undefined;
                 }).catch(Notification.exception);
-            });
+                });
+            }
 
             // Handle AI tag button clicks.
             document.querySelectorAll('.ai-tag-button').forEach(btn => {
@@ -230,7 +263,9 @@ define([
 
                 // Disable buttons and inputs during processing.
                 generateButton.disabled = true;
-                applyButton.disabled = true;
+                if (applyButton) {
+                    applyButton.disabled = true;
+                }
                 instructionsArea.disabled = true;
                 editorModule.disableEditor();
 
@@ -239,7 +274,9 @@ define([
 
                 const finishGeneration = () => {
                     generateButton.disabled = false;
-                    applyButton.disabled = false;
+                    if (applyButton) {
+                        applyButton.disabled = false;
+                    }
                     instructionsArea.disabled = false;
                     editorModule.enableEditor();
                     loader.classList.replace('d-flex', 'd-none');

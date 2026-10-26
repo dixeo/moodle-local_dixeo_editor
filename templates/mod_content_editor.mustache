@@ -19,6 +19,7 @@
     }
 }}
 <div id="content_editor" class="d-flex flex-column flex-grow-1 mt-2">
+    {{#showheader}}
     <div class="row justify-content-between align-items-end px-3 mb-2">
         <h2 class="mb-0">{{ activityname }}</h2>
         <div class="d-flex align-items-center">
@@ -38,6 +39,7 @@
             </button>
         </div>
     </div>
+    {{/showheader}}
     <div id="content_area" class="d-flex flex-column flex-grow-1">
         {{{formhtml}}}
     </div>
