@@ -78,6 +78,7 @@ class regenerate_module_content extends external_api {
      * @param int $slideid Slide row ID (slideshow only).
      * @param string $drafthtml Current editor draft HTML.
      * @return array Response with success status, data or error.
+     * @throws \moodle_exception error:consentrequired (local_dixeo) when the current Terms of Use are not accepted.
      */
     public static function execute(
         int $cmid,
@@ -100,6 +101,8 @@ class regenerate_module_content extends external_api {
         $context = context_module::instance($cm->id);
         self::validate_context($context);
         editor_capability::require_edit_module($context);
+        // This call sends course content to Dixeo, so the current Terms of Use must be accepted.
+        (new \local_dixeo\service\consent_service())->require_accepted((int) $USER->id, $context);
 
         $session = editor_session_repository::get($params['sessionid']);
         if (!$session || (int) $session->userid !== (int) $USER->id) {

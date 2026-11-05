@@ -116,6 +116,7 @@ final class regenerate_events_test extends \advanced_testcase {
             ->willReturn(operation_result::pending('job-start-event', 'pending', 0));
         service_factory::set_test_module_generation_service($modgenservice);
 
+        $this->getDataGenerator()->get_plugin_generator('local_dixeo')->create_terms_acceptance(['userid' => $user->id]);
         $this->setUser($user);
         $sessionid = $this->create_editor_session((int) $cm->id, (int) $user->id);
         $sink = $this->redirectEvents();

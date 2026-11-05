@@ -26,10 +26,10 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_dixeo_editor';
-$plugin->version = 2026100700;
-$plugin->requires = 2022112800;
+$plugin->version = 2026110500;
+$plugin->requires = 2024100700;
 $plugin->maturity = MATURITY_STABLE;
 $plugin->release = '1.4.0';
 $plugin->dependencies = [
-    'local_dixeo' => 2026100700,
+    'local_dixeo' => 2026110502,
 ];

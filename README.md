@@ -12,9 +12,9 @@ This local plugin provides AI-assisted editing for Moodle's _Page_ and _Text & M
 
 ## Requirements
 
-- **Moodle**: 4.3 (or above; should be compatible with 4.1+).
+- **Moodle**: 4.5 or above.
 - **TinyMCE**: Must be configured as the default Moodle text editor.
-- **Dixeo AI (local_dixeo)**: The Dixeo AI core plugin and a valid Dixeo API key.
+- **Dixeo AI (local_dixeo)**: The Dixeo AI core plugin (2026110502 or later) and a valid Dixeo API key.
 
 ## Installation
 
@@ -35,6 +35,10 @@ This local plugin provides AI-assisted editing for Moodle's _Page_ and _Text & M
 4. Press the Dixeo logo to update your content with AI.
 5. Undo/redo changes from TinyMCE.
 6. Save the changes and exit the editor by clicking **OK** (or press **X** to discard changes).
+
+## Upgrade notes
+
+**2026110500:** the content regeneration services may throw `error:consentrequired` (component `local_dixeo`) until the user accepts the current Dixeo Terms of Use. See the local_dixeo README, "Upgrade notes".
 
 ## License
 
