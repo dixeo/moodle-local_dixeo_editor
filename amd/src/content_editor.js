@@ -277,7 +277,7 @@ define([
                     self.strings.yes,
                     self.strings.no,
                     function() {
-                        window.location.href = self.dom.pageCancelButton.href;
+                        self.discardSessionAndLeave(self.dom.pageCancelButton.href);
                     },
                     function() {
                         return undefined;
@@ -644,6 +644,35 @@ define([
                 self.activeJobId = null;
                 self.unlockAfterGeneration();
                 Notification.exception(error);
+                return undefined;
+            });
+        },
+
+        /**
+         * Discard the editor session, then leave the page.
+         *
+         * Discarding clears the applied edit result stored on the session.
+         * The page is left even when the discard request fails.
+         *
+         * @param {string} targetUrl URL to open after the session is discarded.
+         * @returns {Promise|undefined}
+         */
+        discardSessionAndLeave: function(targetUrl) {
+            if (!this.sessionId) {
+                window.location.href = targetUrl;
+                return undefined;
+            }
+            return Ajax.call([{
+                methodname: 'local_dixeo_editor_discard_editor_session',
+                args: {
+                    cmid: this.cmid || 0,
+                    sessionid: this.sessionId,
+                    slideid: this.slideid || 0
+                }
+            }])[0].catch(function() {
+                return undefined;
+            }).then(function() {
+                window.location.href = targetUrl;
                 return undefined;
             });
         },
