@@ -28,6 +28,7 @@ use local_dixeo_editor\external\discard_editor_session;
 use local_dixeo_editor\external\get_regenerate_module_content_status;
 use local_dixeo_editor\external\regenerate_module_content;
 use local_dixeo_editor\external\start_regenerate_module_content;
+use local_dixeo_editor\activity\activity_adapter_factory;
 use local_dixeo_editor\local\editor_session_repository;
 
 /**
@@ -42,6 +43,7 @@ use local_dixeo_editor\local\editor_session_repository;
  * @covers     \local_dixeo_editor\external\cancel_regenerate_module_content
  * @covers     \local_dixeo_editor\external\get_regenerate_module_content_status
  * @covers     \local_dixeo_editor\external\discard_editor_session
+ * @covers     \local_dixeo_editor\activity\base_activity_adapter
  */
 final class consent_gate_test extends \advanced_testcase {
     /** @var \stdClass Course. */
@@ -153,6 +155,47 @@ final class consent_gate_test extends \advanced_testcase {
         $this->assertSame('processing', $status['data']['status']);
         $this->assertTrue(cancel_regenerate_module_content::execute($cmid, 'job-no-terms')['success']);
         $this->assertTrue(discard_editor_session::execute($cmid, $sessionid)['success']);
+    }
+
+    /**
+     * Saving content drops image placeholders without queueing them until the terms are accepted.
+     */
+    public function test_save_queues_image_placeholders_only_with_accepted_terms(): void {
+        global $DB;
+
+        set_config('image_generation_enabled', 1, 'local_dixeo');
+        set_config('image_generation_content_mode', 'generate', 'local_dixeo');
+        $html = '<p>Before</p>[img-gen prompt="x"]<p>After</p>';
+
+        $this->save_page_content($html);
+
+        $stored = (string) $DB->get_field('page', 'content', ['id' => $this->cm->instance], MUST_EXIST);
+        $this->assertStringContainsString('Before', $stored);
+        $this->assertStringContainsString('After', $stored);
+        $this->assertStringNotContainsString('[img-gen', $stored);
+        $this->assertStringNotContainsString('data-dixeo-img-gen=', $stored);
+        $this->assertSame(0, $DB->count_records('local_dixeo_image_job'));
+        $this->assertCount(0, \core\task\manager::get_adhoc_tasks(\local_dixeo\task\poll_image_job::class));
+
+        $this->accept_terms();
+        $this->save_page_content($html);
+
+        $stored = (string) $DB->get_field('page', 'content', ['id' => $this->cm->instance], MUST_EXIST);
+        $this->assertStringContainsString('data-dixeo-img-gen=', $stored);
+        $this->assertSame(1, $DB->count_records('local_dixeo_image_job'));
+        $this->assertCount(1, \core\task\manager::get_adhoc_tasks(\local_dixeo\task\poll_image_job::class));
+    }
+
+    /**
+     * Save page content through the editor adapter with an active editor session, as the editor page does.
+     *
+     * @param string $html Submitted HTML.
+     */
+    private function save_page_content(string $html): void {
+        global $DB;
+
+        $adapter = (new activity_adapter_factory($DB))->create((int) $this->cm->id, null);
+        $adapter->save_content($html, FORMAT_HTML, 0, [], $this->create_editor_session());
     }
 
     /**
