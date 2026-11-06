@@ -59,9 +59,57 @@ final class privacy_provider_test extends \advanced_testcase {
         }
         $this->assertNotNull($external);
         $fields = array_keys($external->get_privacy_fields());
-        foreach (['courseId', 'userId', 'instructions', 'context', 'moduleType', 'namespace'] as $field) {
+        $externalfields = ['courseId', 'userId', 'instructions', 'context', 'drafthtml', 'imageprompt', 'moduleType', 'namespace'];
+        foreach ($externalfields as $field) {
             $this->assertContains($field, $fields, "External metadata must declare {$field}");
         }
+
+        $sessionfields = [];
+        foreach ($items as $item) {
+            if ($item->get_name() === 'local_dixeo_editor_session') {
+                $sessionfields = array_keys($item->get_privacy_fields());
+            }
+        }
+        foreach (['resultjobid', 'resulthtml', 'resultplaceholderids'] as $field) {
+            $this->assertContains($field, $sessionfields, "Session metadata must declare {$field}");
+        }
+
+        foreach ($items as $item) {
+            $this->assertTrue(get_string_manager()->string_exists($item->get_summary(), 'local_dixeo_editor'));
+            foreach ($item->get_privacy_fields() ?? [] as $stringkey) {
+                $this->assertTrue(
+                    get_string_manager()->string_exists($stringkey, 'local_dixeo_editor'),
+                    "Missing string {$stringkey}"
+                );
+            }
+        }
+    }
+
+    public function test_export_user_data_includes_the_applied_result(): void {
+        $this->resetAfterTest(true);
+        $generator = $this->getDataGenerator();
+        $course = $generator->create_course();
+        $user = $generator->create_user();
+        $page = $generator->create_module('page', ['course' => $course->id]);
+        $context = \context_module::instance($page->cmid);
+        $sessionid = (int) local\editor_session_repository::get_or_create_active((int) $page->cmid, null, (int) $user->id)->id;
+        (new local\session_result_store())->store_applied_result(
+            $sessionid,
+            'job-export',
+            new \local_dixeo\service\image\content\decode_result('<p>Applied result</p>', [], [])
+        );
+
+        writer::reset();
+        provider::export_user_data(new \core_privacy\local\request\approved_contextlist(
+            $user,
+            'local_dixeo_editor',
+            [$context->id]
+        ));
+
+        $data = writer::with_context($context)->get_data([get_string('privacy:path:sessions', 'local_dixeo_editor')]);
+        $this->assertCount(1, $data->sessions);
+        $this->assertSame('job-export', $data->sessions[0]->resultjobid);
+        $this->assertSame('<p>Applied result</p>', $data->sessions[0]->resulthtml);
     }
 
     public function test_export_user_preferences_exports_panel_layout(): void {

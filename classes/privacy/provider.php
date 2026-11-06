@@ -68,6 +68,9 @@ class provider implements
                 'status' => 'privacy:metadata:session:status',
                 'timecreated' => 'privacy:metadata:session:timecreated',
                 'timemodified' => 'privacy:metadata:session:timemodified',
+                'resultjobid' => 'privacy:metadata:session:resultjobid',
+                'resulthtml' => 'privacy:metadata:session:resulthtml',
+                'resultplaceholderids' => 'privacy:metadata:session:resultplaceholderids',
             ],
             'privacy:metadata:session'
         );
@@ -83,6 +86,8 @@ class provider implements
             [
                 'instructions' => 'privacy:metadata:instructions',
                 'context' => 'privacy:metadata:context',
+                'drafthtml' => 'privacy:metadata:drafthtml',
+                'imageprompt' => 'privacy:metadata:imageprompt',
                 'courseId' => 'privacy:metadata:courseid',
                 'userId' => 'privacy:metadata:userid',
                 'moduleType' => 'privacy:metadata:moduletype',
@@ -173,6 +178,8 @@ class provider implements
                     'status' => (string) $session->status,
                     'timecreated' => transform::datetime((int) $session->timecreated),
                     'timemodified' => transform::datetime((int) $session->timemodified),
+                    'resultjobid' => $session->resultjobid,
+                    'resulthtml' => $session->resulthtml,
                 ];
 
                 foreach (self::DRAFT_FILEAREAS as $filearea) {

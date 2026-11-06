@@ -70,11 +70,17 @@ $string['pluginname'] = 'Dixeo Editeur IA';
 $string['prettify'] = 'Embellir';
 $string['prettifyprompt'] = "Améliore le contenu à des fins éducatives en le rendant plus attrayant visuellement à l'aide des principes modernes de conception. Ajoute des couleurs appropriées, du gras, de l'italique et d'autres styles de mise en forme pour mettre en évidence les termes clés, les titres et les idées. Utilise une esthétique propre et engageante sans modifier le contenu original";
 
+$string['privacy:metadata:drafthtml'] = 'Contenu non enregistré de l\'éditeur ou brouillon d\'enregistrement automatique Tiny de l\'activité, envoyé à l\'IA pour modification.';
+$string['privacy:metadata:externalpurpose'] = 'Les instructions de modification et le contenu de l\'activité, y compris les brouillons non enregistrés de l\'éditeur ou de l\'enregistrement automatique, sont envoyés à l\'API Dixeo pour régénérer ou affiner le contenu du module. Les demandes de génération d\'images sont créées via Dixeo AI (local_dixeo) et stockées dans ses enregistrements de tâches d\'image.';
 $string['privacy:metadata:files'] = 'Draft images generated while editing an activity, stored until the editor session is saved or discarded.';
+$string['privacy:metadata:imageprompt'] = 'Consignes des images générées lors de la modification d\'une activité, envoyées à Dixeo via Dixeo AI (local_dixeo).';
 $string['privacy:metadata:namespace'] = 'Espace de noms API Dixeo optionnel configuré pour le site.';
 $string['privacy:metadata:preference:panel_layout'] = 'Disposition préférée du panneau IA de l\'éditeur de contenu (ancrage ou fenêtre flottante).';
 $string['privacy:metadata:session'] = 'Editor sessions that track draft image storage for a course module.';
 $string['privacy:metadata:session:cmid'] = 'The course module being edited.';
+$string['privacy:metadata:session:resulthtml'] = 'Le contenu modifié par l\'IA appliqué dans la session de l\'éditeur, conservé jusqu\'à l\'enregistrement ou l\'abandon de la session.';
+$string['privacy:metadata:session:resultjobid'] = 'La tâche Dixeo dont le contenu modifié a été appliqué dans la session de l\'éditeur.';
+$string['privacy:metadata:session:resultplaceholderids'] = 'Identifiants des images dont la génération a été planifiée par le contenu modifié appliqué.';
 $string['privacy:metadata:session:slideid'] = 'The slideshow slide being edited, when applicable.';
 $string['privacy:metadata:session:status'] = 'Whether the session is active, saved, or discarded.';
 $string['privacy:metadata:session:timecreated'] = 'The time when the editor session was created.';
