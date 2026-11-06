@@ -109,14 +109,49 @@ final class editor_session_repository {
      */
     public static function require_owned(int $sessionid, int $userid, int $cmid): \stdClass {
         $session = self::get($sessionid);
-        if (
-            !$session
-            || (int) $session->userid !== $userid
-            || (int) $session->cmid !== $cmid
-        ) {
+        if (!self::is_owned($session, $userid, $cmid)) {
             throw new \moodle_exception('nopermissions', 'error');
         }
         return $session;
+    }
+
+    /**
+     * Require an active session of the user for the course module and slide.
+     *
+     * @param int $sessionid Editor session ID.
+     * @param int $userid Expected owner.
+     * @param int $cmid Expected course module ID.
+     * @param int|null $slideid Expected slide row ID, or null when the activity has no slides.
+     * @return \stdClass
+     * @throws \moodle_exception nopermissions when the session is missing or belongs elsewhere;
+     *     editorsessionexpired (local_dixeo_editor) when it is no longer active.
+     */
+    public static function require_active_owned(int $sessionid, int $userid, int $cmid, ?int $slideid): \stdClass {
+        $session = self::get($sessionid);
+        if (
+            !self::is_owned($session, $userid, $cmid)
+            || (int) ($session->slideid ?? 0) !== (int) ($slideid ?? 0)
+        ) {
+            throw new \moodle_exception('nopermissions', 'error');
+        }
+        if ($session->status !== self::STATUS_ACTIVE) {
+            throw new \moodle_exception('editorsessionexpired', 'local_dixeo_editor');
+        }
+        return $session;
+    }
+
+    /**
+     * Whether a session exists, belongs to the user and matches the course module.
+     *
+     * @param \stdClass|null $session Session record.
+     * @param int $userid Expected owner.
+     * @param int $cmid Expected course module ID.
+     * @return bool
+     */
+    private static function is_owned(?\stdClass $session, int $userid, int $cmid): bool {
+        return $session !== null
+            && (int) $session->userid === $userid
+            && (int) $session->cmid === $cmid;
     }
 
     /**

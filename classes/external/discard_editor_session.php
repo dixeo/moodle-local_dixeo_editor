@@ -57,6 +57,7 @@ class discard_editor_session extends external_api {
      * @param int $sessionid Editor session ID.
      * @param int $slideid Slide row ID (slideshow only, 0 otherwise).
      * @return array
+     * @throws \moodle_exception nopermissions or editorsessionexpired when the session is not the caller's active one.
      */
     public static function execute(int $cmid, int $sessionid, int $slideid = 0): array {
         global $DB, $USER;
@@ -72,12 +73,10 @@ class discard_editor_session extends external_api {
         self::validate_context($context);
         editor_capability::require_edit_module($context);
 
-        $session = editor_session_repository::get($params['sessionid']);
-        if (!$session || (int) $session->userid !== (int) $USER->id) {
-            return ['success' => false, 'error' => ['message' => 'Invalid editor session']];
-        }
+        $subid = (int) $params['slideid'] > 0 ? (int) $params['slideid'] : null;
+        editor_session_repository::require_active_owned($params['sessionid'], (int) $USER->id, (int) $cm->id, $subid);
 
-        $adapter = (new activity_adapter_factory($DB))->create($params['cmid'], $params['slideid'] > 0 ? $params['slideid'] : null);
+        $adapter = (new activity_adapter_factory($DB))->create($params['cmid'], $subid);
         editor_session_repository::discard($params['sessionid'], $adapter->get_modname(), $context);
 
         return ['success' => true];

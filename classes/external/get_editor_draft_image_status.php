@@ -66,6 +66,7 @@ class get_editor_draft_image_status extends external_api {
      * @param array $placeholderids Placeholder UUIDs to poll.
      * @param int $slideid Slide row ID (slideshow only, 0 otherwise).
      * @return array
+     * @throws \moodle_exception nopermissions or editorsessionexpired when the session is not the caller's active one.
      */
     public static function execute(int $cmid, int $sessionid, array $placeholderids, int $slideid = 0): array {
         global $USER;
@@ -82,15 +83,9 @@ class get_editor_draft_image_status extends external_api {
         self::validate_context($context);
         editor_capability::require_edit_module($context);
 
-        $session = editor_session_repository::get($params['sessionid']);
-        if (!$session || (int) $session->userid !== (int) $USER->id) {
-            return [
-                'success' => false,
-                'error' => ['message' => 'Invalid editor session'],
-            ];
-        }
-
         $subid = (int) $params['slideid'] > 0 ? (int) $params['slideid'] : null;
+        editor_session_repository::require_active_owned($params['sessionid'], (int) $USER->id, (int) $cm->id, $subid);
+
         $imagecontext = editor_image_context_factory::from_cmid($params['cmid'], $subid, $params['sessionid']);
 
         $items = [];

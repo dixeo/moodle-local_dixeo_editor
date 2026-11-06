@@ -79,6 +79,7 @@ class regenerate_module_content extends external_api {
      * @param string $drafthtml Current editor draft HTML.
      * @return array Response with success status, data or error.
      * @throws \moodle_exception error:consentrequired (local_dixeo) when the current Terms of Use are not accepted.
+     * @throws \moodle_exception nopermissions or editorsessionexpired when the session is not the caller's active one.
      */
     public static function execute(
         int $cmid,
@@ -104,13 +105,9 @@ class regenerate_module_content extends external_api {
         // This call sends course content to Dixeo, so the current Terms of Use must be accepted.
         (new \local_dixeo\service\consent_service())->require_accepted((int) $USER->id, $context);
 
-        $session = editor_session_repository::get($params['sessionid']);
-        if (!$session || (int) $session->userid !== (int) $USER->id) {
-            return [
-                'success' => false,
-                'error' => ['message' => 'Invalid editor session'],
-            ];
-        }
+        $slideidparam = (int) $params['slideid'];
+        $subid = $slideidparam > 0 ? $slideidparam : null;
+        editor_session_repository::require_active_owned($params['sessionid'], (int) $USER->id, (int) $cm->id, $subid);
 
         $supported = activity_adapter_factory::get_supported_types();
         if (!in_array($cm->modname, $supported, true)) {
@@ -119,9 +116,6 @@ class regenerate_module_content extends external_api {
                 'error' => ['message' => 'Content regeneration is not supported for this activity type.'],
             ];
         }
-
-        $slideidparam = (int) $params['slideid'];
-        $subid = $slideidparam > 0 ? $slideidparam : null;
 
         $drafthtml = trim((string) $params['drafthtml']) !== '' && $subid === null
             ? (string) $params['drafthtml']

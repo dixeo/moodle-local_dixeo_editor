@@ -115,10 +115,12 @@ final class consent_gate_test extends \advanced_testcase {
     public function test_regenerate_passes_the_gate_after_acceptance(): void {
         $this->accept_terms();
 
-        $result = regenerate_module_content::execute((int) $this->cm->id, 'Make it clearer', 0);
-
-        $this->assertFalse($result['success']);
-        $this->assertSame('Invalid editor session', $result['error']['message']);
+        try {
+            regenerate_module_content::execute((int) $this->cm->id, 'Make it clearer', 0);
+            $this->fail('A missing editor session must be refused.');
+        } catch (\moodle_exception $e) {
+            $this->assertSame('nopermissions', $e->errorcode);
+        }
     }
 
     /**
@@ -126,7 +128,15 @@ final class consent_gate_test extends \advanced_testcase {
      */
     public function test_stop_status_and_discard_do_not_require_terms(): void {
         $repo = new job_repository();
-        $repo->register('job-no-terms', (int) $this->course->id, (int) $this->teacher->id, 'default', 'module_edit');
+        $repo->register(
+            'job-no-terms',
+            (int) $this->course->id,
+            (int) $this->teacher->id,
+            'default',
+            'module_edit',
+            'local_dixeo_editor',
+            \local_dixeo\dto\job_binding_metadata::for_module('page', (int) $this->cm->id)
+        );
         $poller = $this->getMockBuilder(\local_dixeo\api\job_poller::class)
             ->disableOriginalConstructor()
             ->onlyMethods(['get_job_status'])

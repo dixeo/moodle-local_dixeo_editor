@@ -73,6 +73,7 @@ class get_regenerate_module_content_status extends external_api {
      * @param int $sessionid Editor session ID.
      * @param int $slideid Slide row ID (slideshow only, 0 otherwise).
      * @return array
+     * @throws \moodle_exception nopermissions or editorsessionexpired when the session is not the caller's active one.
      */
     public static function execute(int $cmid, string $jobid, int $sessionid, int $slideid = 0): array {
         global $DB, $USER;
@@ -89,21 +90,13 @@ class get_regenerate_module_content_status extends external_api {
         self::validate_context($context);
         editor_capability::require_edit_module($context);
 
-        $session = editor_session_repository::get($params['sessionid']);
-        if (!$session || (int) $session->userid !== (int) $USER->id) {
-            return [
-                'success' => false,
-                'error' => ['message' => 'Invalid editor session'],
-            ];
-        }
+        $slideidparam = (int) $params['slideid'];
+        $subid = $slideidparam > 0 ? $slideidparam : null;
+        editor_session_repository::require_active_owned($params['sessionid'], (int) $USER->id, (int) $cm->id, $subid);
 
         try {
-            // Editor regenerate jobs are initiator-scoped.
-            editor_job_access::require_initiator_job(
-                $params['jobid'],
-                (int) $cm->course,
-                (int) $USER->id
-            );
+            // Editor regenerate jobs are bound to the initiator, this course module and the editor.
+            editor_job_access::require_initiator_job($params['jobid'], $cm, (int) $USER->id);
             $statusdto = service_factory::get_job_service()->get_job_status(
                 $params['jobid'],
                 (int) $cm->course,
@@ -128,8 +121,6 @@ class get_regenerate_module_content_status extends external_api {
             ];
 
             if ($status === 'completed') {
-                $slideidparam = (int) $params['slideid'];
-                $subid = $slideidparam > 0 ? $slideidparam : null;
                 $adapter = (new activity_adapter_factory($DB))->create($params['cmid'], $subid);
                 $contentfield = $adapter->get_content_field();
                 $resultdata = $statusdto->result['data'] ?? [];

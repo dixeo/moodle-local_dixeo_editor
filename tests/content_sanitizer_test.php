@@ -131,7 +131,15 @@ final class content_sanitizer_test extends \advanced_testcase {
         $cm = get_coursemodule_from_instance('page', $page->id, $course->id, false, MUST_EXIST);
 
         $repo = new job_repository();
-        $repo->register('job-xss', (int) $course->id, (int) $user->id, 'default', 'module_edit');
+        $repo->register(
+            'job-xss',
+            (int) $course->id,
+            (int) $user->id,
+            'default',
+            'module_edit',
+            'local_dixeo_editor',
+            \local_dixeo\dto\job_binding_metadata::for_module('page', (int) $cm->id)
+        );
 
         $poller = $this->getMockBuilder(\local_dixeo\api\job_poller::class)
             ->disableOriginalConstructor()

@@ -31,5 +31,5 @@ $plugin->requires = 2024100700;
 $plugin->maturity = MATURITY_STABLE;
 $plugin->release = '1.4.0';
 $plugin->dependencies = [
-    'local_dixeo' => 2026110502,
+    'local_dixeo' => 2026110601,
 ];

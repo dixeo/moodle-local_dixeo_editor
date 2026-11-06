@@ -72,12 +72,8 @@ class cancel_regenerate_module_content extends external_api {
         editor_capability::require_edit_module($context);
 
         try {
-            // Editor regenerate jobs are initiator-scoped.
-            editor_job_access::require_initiator_job(
-                $params['jobid'],
-                (int) $cm->course,
-                (int) $USER->id
-            );
+            // Editor regenerate jobs are bound to the initiator, this course module and the editor.
+            editor_job_access::require_initiator_job($params['jobid'], $cm, (int) $USER->id);
             $result = service_factory::get_job_service()->cancel_job(
                 $params['jobid'],
                 (int) $cm->course,

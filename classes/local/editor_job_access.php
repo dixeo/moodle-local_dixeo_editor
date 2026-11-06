@@ -27,22 +27,24 @@ use local_dixeo\external\service_factory;
  */
 final class editor_job_access {
     /**
-     * Ensure a regenerate job belongs to the course and initiating user.
+     * Ensure a regenerate job was started by the user from the editor on this course module.
      *
      * Uses the hub job registry only; does not call the remote API.
      *
      * @param string $jobid Remote job UUID.
-     * @param int $courseid Expected course ID.
+     * @param \stdClass $cm Course module the job must be bound to.
      * @param int $userid Expected initiating user ID.
      * @throws \moodle_exception When the binding is missing or mismatched.
      */
-    public static function require_initiator_job(string $jobid, int $courseid, int $userid): void {
-        $record = service_factory::get_job_service()->get_job_repository()->get_by_jobid($jobid);
-        if (
-            $record === null
-            || (int) $record->courseid !== $courseid
-            || (int) $record->userid !== $userid
-        ) {
+    public static function require_initiator_job(string $jobid, \stdClass $cm, int $userid): void {
+        $bound = service_factory::get_job_service()->get_job_repository()->belongs_to_module(
+            $jobid,
+            (int) $cm->course,
+            (int) $cm->id,
+            $userid,
+            'local_dixeo_editor'
+        );
+        if (!$bound) {
             throw new \moodle_exception('error:job_not_found', 'local_dixeo');
         }
     }
