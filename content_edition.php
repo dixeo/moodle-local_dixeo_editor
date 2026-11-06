@@ -39,6 +39,8 @@ require_course_login($cm->course, true, $cm);
 $modname = $cm->modname;
 $context = context_module::instance($cm->id);
 \local_dixeo_editor\local\editor_capability::require_edit_module($context);
+// The editor is unavailable while Dixeo is off; plain edits use the activity's own form.
+\local_dixeo\external\service_factory::get_settings_config()->require_enabled($context);
 
 $course = $DB->get_record('course', ['id' => $cm->course], '*', MUST_EXIST);
 $PAGE->set_cm($cm, $course);

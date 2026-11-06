@@ -38,6 +38,10 @@ This local plugin provides AI-assisted editing for Moodle's _Page_ and _Text & M
 
 ## Upgrade notes
 
+**2026110600:**
+
+- While Dixeo is off for the course or the site, the editor pages (`content.php`, `content_edition.php`), the embedded slide editor and both content regeneration services throw `error:dixeo_disabled` (component `local_dixeo`). Edit the activity through its own Moodle form instead.
+
 **2026110500:** the content regeneration services may throw `error:consentrequired` (component `local_dixeo`) until the user accepts the current Dixeo Terms of Use. See the local_dixeo README, "Upgrade notes".
 
 ## License

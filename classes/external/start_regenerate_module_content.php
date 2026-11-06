@@ -92,6 +92,7 @@ class start_regenerate_module_content extends external_api {
      * @param string $autosavepagehash Tiny autosave page hash.
      * @param string $autosaveelementid Tiny autosave target element id.
      * @return array
+     * @throws \moodle_exception error:dixeo_disabled (local_dixeo) when Dixeo is off for the course or the site.
      * @throws \moodle_exception error:consentrequired (local_dixeo) when the current Terms of Use are not accepted.
      * @throws \moodle_exception nopermissions or editorsessionexpired when the session is not the caller's active one.
      */
@@ -120,6 +121,8 @@ class start_regenerate_module_content extends external_api {
         $context = context_module::instance($cm->id);
         self::validate_context($context);
         editor_capability::require_edit_module($context);
+        // Nothing is sent to Dixeo while it is off for this activity's course or the site.
+        \local_dixeo\external\service_factory::get_settings_config()->require_enabled($context);
         // This call sends course content to Dixeo, so the current Terms of Use must be accepted.
         (new \local_dixeo\service\consent_service())->require_accepted((int) $USER->id, $context);
 

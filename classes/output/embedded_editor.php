@@ -35,6 +35,7 @@ class embedded_editor {
      * @param int $slideid Slideshow slide id.
      * @param \context_module $context Module context.
      * @return array{html: string, sessionid: int} Editor markup and session id.
+     * @throws \moodle_exception error:dixeo_disabled (local_dixeo) when Dixeo is off for the course or the site.
      */
     public static function render(\stdClass $cm, int $slideid, \context_module $context): array {
         global $CFG, $DB, $OUTPUT, $USER;
@@ -42,6 +43,7 @@ class embedded_editor {
         require_once($CFG->dirroot . '/mod/page/locallib.php');
 
         \local_dixeo_editor\local\editor_capability::require_edit_module($context);
+        \local_dixeo\external\service_factory::get_settings_config()->require_enabled($context);
 
         $factory = new \local_dixeo_editor\activity\activity_adapter_factory($DB);
         $activityadapter = $factory->create((int) $cm->id, $slideid);
