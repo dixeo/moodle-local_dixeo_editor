@@ -30,6 +30,7 @@ use core_external\external_function_parameters;
 use core_external\external_multiple_structure;
 use core_external\external_single_structure;
 use core_external\external_value;
+use local_dixeo\external\response_factory;
 use local_dixeo\external\service_factory;
 use local_dixeo\service\image\content\editor_regenerate_service;
 use local_dixeo_editor\activity\activity_adapter_factory;
@@ -110,13 +111,20 @@ class get_regenerate_module_content_status extends external_api {
             );
             $status = self::normalize_status($statusdto->status, $statusdto->errorcode);
 
+            // The provider's error text stays in the developer log; the client gets a mapped message.
+            $errormessage = '';
+            if ($statusdto->errorcode !== null || $statusdto->errormessage !== null) {
+                $clientstatus = response_factory::client_job_status($statusdto, 'error:generic', 'local_dixeo_editor');
+                $errormessage = (string) ($clientstatus['error']['detail'] ?? '');
+            }
+
             $data = [
                 'jobid' => $statusdto->jobid,
                 'status' => $status,
                 'progress' => $statusdto->progress,
                 'content' => '',
                 'pendingplaceholderids' => [],
-                'errormessage' => $statusdto->errormessage ?? '',
+                'errormessage' => $errormessage,
             ];
 
             if ($status === 'completed') {
