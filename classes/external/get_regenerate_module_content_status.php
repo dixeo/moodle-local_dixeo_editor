@@ -41,6 +41,7 @@ use local_dixeo_editor\local\editor_image_context_factory;
 use local_dixeo_editor\local\editor_job_access;
 use local_dixeo_editor\local\editor_session_repository;
 use local_dixeo_editor\local\external_error;
+use local_dixeo_editor\local\session_result_store;
 
 /**
  * External API to poll module content regeneration job status.
@@ -126,16 +127,26 @@ class get_regenerate_module_content_status extends external_api {
                 $resultdata = $statusdto->result['data'] ?? [];
                 $rawcontent = $resultdata[$contentfield] ?? ($resultdata['content'] ?? '');
                 $imagecontext = editor_image_context_factory::from_cmid($params['cmid'], $subid, $params['sessionid']);
-                $decoded = editor_regenerate_service::decode_api_content(
+                // A completed job is decoded once per session; later polls return the stored result.
+                $applied = editor_regenerate_service::apply_api_content_once(
+                    $statusdto->jobid,
                     (string) $rawcontent,
                     $imagecontext,
-                    (int) $USER->id
+                    (int) $USER->id,
+                    new session_result_store()
                 );
 
-                $data['content'] = content_sanitizer::sanitize($decoded->html);
-                $data['pendingplaceholderids'] = $decoded->newplaceholderids;
-                // Audit only: job id + cm — never put content in the event payload.
-                regenerate_completed::create_for_cm($cm, (int) $USER->id, $statusdto->jobid)->trigger();
+                if ($applied === null) {
+                    // Another request is applying this result; the client polls again.
+                    $data['status'] = 'processing';
+                } else {
+                    $data['content'] = content_sanitizer::sanitize($applied->result->html);
+                    $data['pendingplaceholderids'] = $applied->result->newplaceholderids;
+                    if ($applied->firstapplication) {
+                        // Audit only: job id + cm — never put content in the event payload.
+                        regenerate_completed::create_for_cm($cm, (int) $USER->id, $statusdto->jobid)->trigger();
+                    }
+                }
             }
 
             return [

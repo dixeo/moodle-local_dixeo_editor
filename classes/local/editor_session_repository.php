@@ -157,16 +157,24 @@ final class editor_session_repository {
     /**
      * Update the status of a session.
      *
+     * A saved or discarded session no longer keeps the applied edit result.
+     *
      * @param int $sessionid Editor session ID.
      * @param string $status New status value.
      */
     public static function set_status(int $sessionid, string $status): void {
         global $DB;
-        $DB->update_record(self::TABLE, (object) [
+        $record = (object) [
             'id' => $sessionid,
             'status' => $status,
             'timemodified' => time(),
-        ]);
+        ];
+        if ($status === self::STATUS_SAVED || $status === self::STATUS_DISCARDED) {
+            $record->resultjobid = null;
+            $record->resulthtml = null;
+            $record->resultplaceholderids = null;
+        }
+        $DB->update_record(self::TABLE, $record);
     }
 
     /**

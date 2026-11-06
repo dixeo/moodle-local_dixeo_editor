@@ -54,5 +54,21 @@ function xmldb_local_dixeo_editor_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026073101, 'local', 'dixeo_editor');
     }
 
+    if ($oldversion < 2026110600) {
+        $table = new xmldb_table('local_dixeo_editor_session');
+        $fields = [
+            new xmldb_field('resultjobid', XMLDB_TYPE_CHAR, '64', null, null, null, null, 'timemodified'),
+            new xmldb_field('resulthtml', XMLDB_TYPE_TEXT, null, null, null, null, null, 'resultjobid'),
+            new xmldb_field('resultplaceholderids', XMLDB_TYPE_TEXT, null, null, null, null, null, 'resulthtml'),
+        ];
+        foreach ($fields as $field) {
+            if (!$dbman->field_exists($table, $field)) {
+                $dbman->add_field($table, $field);
+            }
+        }
+
+        upgrade_plugin_savepoint(true, 2026110600, 'local', 'dixeo_editor');
+    }
+
     return true;
 }
