@@ -34,7 +34,7 @@ $cmid = required_param('cmid', PARAM_INT);
 $subid = optional_param('slideid', 0, PARAM_INT) ?: null;
 
 // Retrieve the course module record using Moodle API.
-$cm = get_coursemodule_from_id('', $cmid);
+$cm = get_coursemodule_from_id('', $cmid, 0, false, MUST_EXIST);
 require_course_login($cm->course, true, $cm);
 $modname = $cm->modname;
 $context = context_module::instance($cm->id);
