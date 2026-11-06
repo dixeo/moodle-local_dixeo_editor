@@ -33,6 +33,7 @@ use core_external\external_single_structure;
 use core_external\external_value;
 use local_dixeo\service\image\content\editor_regenerate_service;
 use local_dixeo\service\module_generation_service;
+use local_dixeo\util\input_limits;
 use local_dixeo_editor\activity\activity_adapter_factory;
 use local_dixeo_editor\local\content_sanitizer;
 use local_dixeo_editor\local\editor_capability;
@@ -81,6 +82,7 @@ class regenerate_module_content extends external_api {
      * @throws \moodle_exception error:dixeo_disabled (local_dixeo) when Dixeo is off for the course or the site.
      * @throws \moodle_exception error:consentrequired (local_dixeo) when the current Terms of Use are not accepted.
      * @throws \moodle_exception nopermissions or editorsessionexpired when the session is not the caller's active one.
+     * @throws \moodle_exception error:content_too_long (local_dixeo) when the draft HTML is too large.
      */
     public static function execute(
         int $cmid,
@@ -123,6 +125,14 @@ class regenerate_module_content extends external_api {
         $drafthtml = trim((string) $params['drafthtml']) !== '' && $subid === null
             ? (string) $params['drafthtml']
             : null;
+        if ($drafthtml !== null) {
+            input_limits::require_max_size(
+                $drafthtml,
+                input_limits::MAX_EDIT_CONTENT_BYTES,
+                'error:content_too_long',
+                'local_dixeo'
+            );
+        }
 
         $imagecontext = editor_image_context_factory::from_cmid($params['cmid'], $subid, $params['sessionid']);
 

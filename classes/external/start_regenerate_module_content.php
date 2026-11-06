@@ -34,6 +34,7 @@ use local_dixeo\dto\job_binding_metadata;
 use local_dixeo\external\service_factory;
 use local_dixeo\service\image\content\editor_regenerate_service;
 use local_dixeo\service\tiny_autosave_draft_service;
+use local_dixeo\util\input_limits;
 use local_dixeo_editor\event\regenerate_started;
 use local_dixeo_editor\local\editor_capability;
 use local_dixeo_editor\local\editor_image_context_factory;
@@ -95,6 +96,8 @@ class start_regenerate_module_content extends external_api {
      * @throws \moodle_exception error:dixeo_disabled (local_dixeo) when Dixeo is off for the course or the site.
      * @throws \moodle_exception error:consentrequired (local_dixeo) when the current Terms of Use are not accepted.
      * @throws \moodle_exception nopermissions or editorsessionexpired when the session is not the caller's active one.
+     * @throws \invalid_parameter_exception When the autosave reference does not match this activity or is malformed.
+     * @throws \moodle_exception error:content_too_long (local_dixeo) when the autosave text is too large.
      */
     public static function execute(
         int $cmid,
@@ -130,19 +133,27 @@ class start_regenerate_module_content extends external_api {
         $subid = $slideidparam > 0 ? $slideidparam : null;
         editor_session_repository::require_active_owned($params['sessionid'], (int) $USER->id, (int) $cm->id, $subid);
 
+        $drafthtml = $subid === null
+            ? self::resolve_autosave_draft_html(
+                $cm,
+                $context,
+                (int) $params['autosave_contextid'],
+                (string) $params['autosave_pagehash'],
+                (string) $params['autosave_elementid'],
+                (int) $USER->id
+            )
+            : null;
+        if ($drafthtml !== null) {
+            input_limits::require_max_size(
+                $drafthtml,
+                input_limits::MAX_EDIT_CONTENT_BYTES,
+                'error:content_too_long',
+                'local_dixeo'
+            );
+        }
+
         try {
             require_once($CFG->dirroot . '/local/dixeo/lib.php');
-
-            $drafthtml = $subid === null
-                ? self::resolve_autosave_draft_html(
-                    $cm,
-                    $context,
-                    (int) $params['autosave_contextid'],
-                    (string) $params['autosave_pagehash'],
-                    (string) $params['autosave_elementid'],
-                    (int) $USER->id
-                )
-                : null;
 
             $imagecontext = editor_image_context_factory::from_cmid($params['cmid'], $subid, $params['sessionid']);
 
