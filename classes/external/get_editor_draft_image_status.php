@@ -31,6 +31,7 @@ use core_external\external_multiple_structure;
 use core_external\external_single_structure;
 use core_external\external_value;
 use local_dixeo\repository\image\job_repository;
+use local_dixeo\service\image\placeholder_ids;
 use local_dixeo\service\image\content\file_service;
 use local_dixeo\service\image\content\url_helper;
 use local_dixeo_editor\local\editor_capability;
@@ -51,7 +52,7 @@ class get_editor_draft_image_status extends external_api {
             'cmid' => new external_value(PARAM_INT, 'Course module ID'),
             'sessionid' => new external_value(PARAM_INT, 'Editor session ID'),
             'placeholderids' => new external_multiple_structure(
-                new external_value(PARAM_RAW, 'Placeholder UUID'),
+                new external_value(PARAM_ALPHANUMEXT, 'Placeholder UUID'),
                 'Placeholder ids to poll'
             ),
             'slideid' => new external_value(PARAM_INT, 'Slide row ID', VALUE_DEFAULT, 0),
@@ -63,13 +64,17 @@ class get_editor_draft_image_status extends external_api {
      *
      * @param int $cmid Course module ID.
      * @param int $sessionid Editor session ID.
-     * @param array $placeholderids Placeholder UUIDs to poll.
+     * @param array $placeholderids Placeholder UUIDs to poll, at most placeholder_ids::MAX_PER_REQUEST.
      * @param int $slideid Slide row ID (slideshow only, 0 otherwise).
      * @return array
+     * @throws \invalid_parameter_exception When more than placeholder_ids::MAX_PER_REQUEST ids are sent.
      * @throws \moodle_exception nopermissions or editorsessionexpired when the session is not the caller's active one.
      */
     public static function execute(int $cmid, int $sessionid, array $placeholderids, int $slideid = 0): array {
         global $USER;
+
+        // Bound and clean the list before any parameter cleaning or database access.
+        $placeholderids = placeholder_ids::normalise($placeholderids);
 
         $params = self::validate_parameters(self::execute_parameters(), [
             'cmid' => $cmid,
@@ -90,11 +95,6 @@ class get_editor_draft_image_status extends external_api {
 
         $items = [];
         foreach ($params['placeholderids'] as $placeholderid) {
-            $placeholderid = trim((string) $placeholderid);
-            if ($placeholderid === '') {
-                continue;
-            }
-
             $filename = file_service::stub_filename_for_placeholder($placeholderid);
             $draftloc = $imagecontext->draft_location($filename);
             $statuspayload = job_repository::get_location_status($draftloc);
