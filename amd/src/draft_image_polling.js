@@ -21,7 +21,11 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-define(['core/ajax', 'local_dixeo/content_image_pending'], function(Ajax, ContentImagePending) {
+define([
+    'local_dixeo/content_image_pending',
+    'local_dixeo/network',
+    'local_dixeo_editor/connection',
+], function(ContentImagePending, Network, Connection) {
     'use strict';
 
     const POLL_INTERVAL_MS = 3000;
@@ -199,6 +203,9 @@ define(['core/ajax', 'local_dixeo/content_image_pending'], function(Ajax, Conten
     /**
      * Start polling draft placeholders. Mutates host.pendingPlaceholderIds / host.imagePollTimer.
      *
+     * One status read is pending at a time. Connection failures are retried for the retry window,
+     * then polling stops and the connection message is shown.
+     *
      * @param {object} host Editor instance holding pendingPlaceholderIds + imagePollTimer
      * @param {object} opts
      * @param {number} opts.cmid
@@ -215,15 +222,30 @@ define(['core/ajax', 'local_dixeo/content_image_pending'], function(Ajax, Conten
             host.imagePollTimer = null;
         }
 
-        const pollOnce = () => {
-            if (!host.pendingPlaceholderIds.length) {
-                if (host.imagePollTimer) {
-                    window.clearInterval(host.imagePollTimer);
+        const retryWindow = Network.createRetryWindow();
+        let inFlight = false;
+        let timer = null;
+
+        const stopPolling = () => {
+            if (timer) {
+                window.clearInterval(timer);
+                if (host.imagePollTimer === timer) {
                     host.imagePollTimer = null;
                 }
+                timer = null;
+            }
+        };
+
+        const pollOnce = () => {
+            if (!host.pendingPlaceholderIds.length) {
+                stopPolling();
                 return;
             }
-            Ajax.call([{
+            if (inFlight) {
+                return;
+            }
+            inFlight = true;
+            Network.call({
                 methodname: 'local_dixeo_editor_get_editor_draft_image_status',
                 args: {
                     cmid: opts.cmid,
@@ -231,7 +253,8 @@ define(['core/ajax', 'local_dixeo/content_image_pending'], function(Ajax, Conten
                     placeholderids: host.pendingPlaceholderIds,
                     slideid: opts.slideid || 0,
                 },
-            }])[0].then((response) => {
+            }, {timeout: Network.TIMEOUT_STATUS_MS}).then((response) => {
+                retryWindow.succeeded();
                 if (!response.success || !response.data || !response.data.items) {
                     return undefined;
                 }
@@ -247,13 +270,20 @@ define(['core/ajax', 'local_dixeo/content_image_pending'], function(Ajax, Conten
                     );
                 });
                 return undefined;
-            }).catch(() => {
-                // Keep polling on transient errors.
+            }).catch((failure) => {
+                if (Network.isConnectionError(failure) && !retryWindow.shouldRetry(failure)) {
+                    stopPolling();
+                    Connection.exception(failure);
+                }
+                // Server errors keep polling.
+            }).finally(() => {
+                inFlight = false;
             });
         };
 
+        timer = window.setInterval(pollOnce, POLL_INTERVAL_MS);
+        host.imagePollTimer = timer;
         pollOnce();
-        host.imagePollTimer = window.setInterval(pollOnce, POLL_INTERVAL_MS);
     };
 
     return {

@@ -49,6 +49,7 @@ $string['editorsessionexpired'] = 'Session d\'édition expirée';
 $string['enrich'] = 'Enrichir';
 $string['enrichprompt'] = 'Améliore le contenu à des fins éducatives en ajoutant des explications détaillées, des exemples pertinents et du contexte pour rendre le matériel plus complet et engageant pour les apprenants. Assure clarté, précision et un ton accessible adapté à un public diversifié';
 $string['error:generic'] = 'Une erreur inattendue est survenue. Veuillez réessayer.';
+$string['error_connection'] = 'La connexion au serveur a été perdue. Vérifiez votre réseau et réessayez.';
 $string['eventregeneratecancelled'] = 'Régénération de module Dixeo annulée';
 $string['eventregeneratecancelleddesc'] = 'L\'utilisateur avec l\'id \'{$a->userid}\' a annulé la tâche de régénération Dixeo \'{$a->jobid}\' pour le module \'{$a->cmid}\' du cours \'{$a->courseid}\'.';
 $string['eventregeneratecompleted'] = 'Régénération de module Dixeo terminée';

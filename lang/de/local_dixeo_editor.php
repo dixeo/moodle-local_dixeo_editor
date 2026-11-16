@@ -49,6 +49,7 @@ $string['editorsessionexpired'] = 'Editorsitzung abgelaufen';
 $string['enrich'] = 'Anreichern';
 $string['enrichprompt'] = 'Reichert den Inhalt zu Bildungszwecken durch detaillierte Erklärungen, relevante Beispiele und Kontext an, um das Material umfassender und ansprechender zu gestalten. Stellt Klarheit, Genauigkeit und einen zugänglichen Ton für ein vielfältiges Publikum sicher';
 $string['error:generic'] = 'Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es erneut.';
+$string['error_connection'] = 'Die Verbindung zum Server wurde unterbrochen. Prüfen Sie Ihr Netzwerk und versuchen Sie es erneut.';
 $string['eventregeneratecancelled'] = 'Dixeo-Modul-Regenerierung abgebrochen';
 $string['eventregeneratecancelleddesc'] = 'Der Benutzer mit der ID \'{$a->userid}\' hat den Dixeo-Regenerierungsauftrag \'{$a->jobid}\' für Kursmodul \'{$a->cmid}\' im Kurs \'{$a->courseid}\' abgebrochen.';
 $string['eventregeneratecompleted'] = 'Dixeo-Modul-Regenerierung abgeschlossen';

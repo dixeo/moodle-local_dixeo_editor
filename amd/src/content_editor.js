@@ -1,5 +1,4 @@
 define([
-    'core/ajax',
     'core/templates',
     'core/notification',
     'core/str',
@@ -8,9 +7,10 @@ define([
     'tiny_autosave/repository',
     'tiny_autosave/options',
     'local_dixeo/content_image_pending',
-    'local_dixeo_editor/draft_image_polling'
+    'local_dixeo_editor/draft_image_polling',
+    'local_dixeo/network',
+    'local_dixeo_editor/connection'
 ], function(
-    Ajax,
     Templates,
     Notification,
     Str,
@@ -19,7 +19,9 @@ define([
     AutosaveRepository,
     AutosaveOptions,
     ContentImagePending,
-    DraftImagePolling
+    DraftImagePolling,
+    Network,
+    Connection
 ) {
     'use strict';
 
@@ -553,10 +555,11 @@ define([
                     self.sessionId,
                     autosaveKeys
                 );
-                return Ajax.call([{
+                // A paid start: sent once. A lost start has no job id to follow.
+                return Network.call({
                     methodname: 'local_dixeo_editor_start_regenerate_module_content',
                     args: args
-                }])[0];
+                }, {timeout: Network.TIMEOUT_ACTION_MS});
             }).then(function(response) {
                 if (token !== self.generationToken || response === null) {
                     return undefined;
@@ -569,6 +572,7 @@ define([
                     throw new Error(startError);
                 }
                 self.activeJobId = response.data.jobid;
+                self.pollRetryWindow = Network.createRetryWindow();
                 self.pollJob(token);
                 return undefined;
             }).catch(function(error) {
@@ -576,7 +580,7 @@ define([
                     return undefined;
                 }
                 self.unlockAfterGeneration();
-                Notification.exception(error);
+                Connection.exception(error);
                 return undefined;
             });
         },
@@ -587,7 +591,11 @@ define([
                 return;
             }
 
-            Ajax.call([{
+            if (!this.pollRetryWindow) {
+                this.pollRetryWindow = Network.createRetryWindow();
+            }
+
+            Network.call({
                 methodname: 'local_dixeo_editor_get_regenerate_module_content_status',
                 args: {
                     cmid: this.cmid,
@@ -595,10 +603,11 @@ define([
                     sessionid: this.sessionId,
                     slideid: this.slideid
                 }
-            }])[0].then(function(response) {
+            }, {timeout: Network.TIMEOUT_STATUS_MS}).then(function(response) {
                 if (token !== self.generationToken) {
                     return undefined;
                 }
+                self.pollRetryWindow.succeeded();
                 if (!response.success) {
                     var statusError = self.strings.unexpectedError;
                     if (response.error && response.error.message) {
@@ -641,9 +650,16 @@ define([
                 if (token !== self.generationToken) {
                     return undefined;
                 }
+                // The job keeps running on the server through a short connection loss.
+                if (self.pollRetryWindow.shouldRetry(error)) {
+                    self.pollingTimer = window.setTimeout(function() {
+                        self.pollJob(token);
+                    }, 1500);
+                    return undefined;
+                }
                 self.activeJobId = null;
                 self.unlockAfterGeneration();
-                Notification.exception(error);
+                Connection.exception(error);
                 return undefined;
             });
         },
@@ -662,14 +678,14 @@ define([
                 window.location.href = targetUrl;
                 return undefined;
             }
-            return Ajax.call([{
+            return Network.call({
                 methodname: 'local_dixeo_editor_discard_editor_session',
                 args: {
                     cmid: this.cmid || 0,
                     sessionid: this.sessionId,
                     slideid: this.slideid || 0
                 }
-            }])[0].catch(function() {
+            }, {timeout: Network.TIMEOUT_ACTION_MS}).catch(function() {
                 return undefined;
             }).then(function() {
                 window.location.href = targetUrl;
@@ -694,13 +710,13 @@ define([
                 return;
             }
 
-            Ajax.call([{
+            Network.call({
                 methodname: 'local_dixeo_editor_cancel_regenerate_module_content',
                 args: {
                     cmid: this.cmid,
                     jobid: jobid
                 }
-            }])[0].then(function() {
+            }, {timeout: Network.TIMEOUT_ACTION_MS}).then(function() {
                 self.activeJobId = null;
                 self.unlockAfterGeneration();
                 return undefined;

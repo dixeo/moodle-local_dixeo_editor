@@ -10,11 +10,12 @@ define([
     'jquery',
     'core/templates',
     'core/notification',
-    'core/ajax',
     'core/str',
     'local_dixeo/content_image_pending',
-    'local_dixeo_editor/draft_image_polling'
-], function($, Templates, Notification, Ajax, Str, ContentImagePending, DraftImagePolling) {
+    'local_dixeo_editor/draft_image_polling',
+    'local_dixeo/network',
+    'local_dixeo_editor/connection'
+], function($, Templates, Notification, Str, ContentImagePending, DraftImagePolling, Network, Connection) {
     // Note: Do NOT resolve DOM elements at module load time.
     // Moodle may load this AMD module before the template markup is present.
     // Always query inside init/setup to avoid stale null references.
@@ -282,9 +283,9 @@ define([
                     loader.classList.replace('d-flex', 'd-none');
                 };
 
-                // Call Dixeo web service using Moodle Ajax API. Send the live
+                // Synchronous paid generation: sent once, without a timeout. Send the live
                 // editor HTML so unsaved draft images survive the round-trip.
-                return Ajax.call([{
+                return Network.call({
                     methodname: 'local_dixeo_editor_regenerate_module_content',
                     args: {
                         cmid: cmid,
@@ -293,7 +294,7 @@ define([
                         slideid: slideid || 0,
                         drafthtml: this.getEditorContent()
                     }
-                }])[0]
+                }, {timeout: Network.TIMEOUT_NONE})
                 .then((response) => {
                     if (!response.success) {
                         const errorMsg = response.error?.message || 'An unexpected error occurred. Please try again.';
@@ -324,7 +325,7 @@ define([
                     return undefined;
                 })
                 .catch((error) => {
-                    Notification.exception(error);
+                    Connection.exception(error);
                     return undefined;
                 })
                 .then(() => {
@@ -478,14 +479,14 @@ define([
                 window.location.href = targetUrl;
                 return undefined;
             }
-            return Ajax.call([{
+            return Network.call({
                 methodname: 'local_dixeo_editor_discard_editor_session',
                 args: {
                     cmid: this.cmid || 0,
                     sessionid: this.sessionId,
                     slideid: this.slideid || 0
                 }
-            }])[0].catch(() => {
+            }, {timeout: Network.TIMEOUT_ACTION_MS}).catch(() => {
                 // Still leave the page if discard fails.
                 return undefined;
             }).then(() => {
