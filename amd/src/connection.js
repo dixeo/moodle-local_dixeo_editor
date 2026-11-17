@@ -22,15 +22,6 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-import {forComponent} from 'local_dixeo/network';
-
-export const {
-    component,
-    connectionMessage,
-    message,
-    alertString,
-    notifyConnection,
-    notifyError,
-    exception,
-    handle,
-} = forComponent({component: 'local_dixeo_editor'});
+define(['local_dixeo/network'], function(Network) {
+    return Network.forComponent({component: 'local_dixeo_editor'});
+});
