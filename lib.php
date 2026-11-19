@@ -107,18 +107,43 @@ function local_dixeo_editor_extend_navigation_course(navigation_node $navigation
     if (strpos($PAGE->pagetype, 'course-view') === 0 && $PAGE->user_is_editing()) {
         $PAGE->requires->js_call_amd('local_dixeo_editor/action_menu_edit', 'init');
     }
+}
 
-    if (
-        $PAGE->cm !== null && $PAGE->cm->modname === 'page'
-        && editor_capability::can_edit_module($PAGE->cm->context)
-    ) {
-        // Call init js script.
-        $url = new moodle_url(LOCAL_DIXEO_EDITOR_CONTENT_EDIT_PATH, ['cmid' => $PAGE->cm->id]);
-        $PAGE->requires->js_call_amd('local_dixeo_editor/display_edit', 'init', [
-            $url->out(false),
-            get_string('editcontent', 'local_dixeo_editor'),
-        ]);
+/**
+ * Add the Dixeo AI Editor entry to a page activity's settings navigation.
+ *
+ * The activity secondary navigation is built from these nodes, so the entry appears in the
+ * activity menu on Moodle 4.5 (server-rendered tabs) and 5.x (tabs rendered by the core Nav component).
+ *
+ * @param settings_navigation $settingsnav Settings navigation.
+ * @param context $context Current page context.
+ */
+function local_dixeo_editor_extend_settings_navigation(settings_navigation $settingsnav, context $context): void {
+    global $PAGE;
+
+    if ($context->contextlevel != CONTEXT_MODULE || $PAGE->cm === null || $PAGE->cm->modname !== 'page') {
+        return;
     }
+    // The editor is a Dixeo feature, so its entry is omitted while Dixeo is off.
+    if (!\local_dixeo\external\service_factory::get_settings_config()->enabled_for($context)) {
+        return;
+    }
+    if (!editor_capability::can_edit_module($context)) {
+        return;
+    }
+    $modulesettings = $settingsnav->find('modulesettings', navigation_node::TYPE_SETTING);
+    if (!$modulesettings || $modulesettings->get('aiedit')) {
+        return;
+    }
+
+    $node = navigation_node::create(
+        get_string('editcontent', 'local_dixeo_editor'),
+        new moodle_url(LOCAL_DIXEO_EDITOR_CONTENT_EDIT_PATH, ['cmid' => $PAGE->cm->id]),
+        navigation_node::TYPE_SETTING,
+        null,
+        'aiedit'
+    );
+    $modulesettings->add_node($node, $modulesettings->get('modedit') ? 'modedit' : null);
 }
 
 /**
