@@ -173,6 +173,19 @@
     min-width: 100%;
 }
 
+/* Boost's top margin on #topofscroll would push the full-height editor below the window. */
+#page-local-dixeo_editor-content #topofscroll {
+    margin-top: 0 !important;
+}
+
+/* Floating panel: keep the editor at the limitedwidth column, centred (docked layouts use the full width). */
+body#page-local-dixeo_editor-content:not(.dixeo-editor-layout-docked) #topofscroll {
+    width: 100%;
+    min-width: 0;
+    margin-right: auto;
+    margin-left: auto;
+}
+
 #page-local-dixeo_editor-content #topofscroll #page-header,
 #page-local-dixeo_editor-content #topofscroll .secondary-navigation,
 #page-local-dixeo_editor-content #topofscroll .drawer-toggles {
@@ -187,11 +200,6 @@
 
 #page-local-dixeo_editor-content #page.drawers .main-inner #region-main div[role="main"] {
     padding: 1rem !important;
-}
-
-/* Floating panel: center page when course index drawer is open */
-body#page-local-dixeo_editor-content:not(.dixeo-editor-layout-docked) #page-wrapper #page.drawers.show-drawer-left {
-    margin: 0 auto !important;
 }
 
 /* Root wraps editor column + dock slots; #content_editor stays inside and is never reparented */
@@ -510,10 +518,6 @@ body#page-local-dixeo_editor-content.dixeo-editor-resizing-active #dixeo_editor_
 /* Docked layout (content.php) */
 body#page-local-dixeo_editor-content.dixeo-editor-layout-docked #page-wrapper #page.drawers {
     max-width: 100%;
-}
-
-body#page-local-dixeo_editor-content.dixeo-editor-layout-docked #page-wrapper #page.drawers.show-drawer-left {
-    margin-left: 0 !important;
 }
 
 body#page-local-dixeo_editor-content.dixeo-editor-layout-docked #page.drawers .main-inner #region-main div[role="main"] {

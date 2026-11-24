@@ -45,6 +45,12 @@ $PAGE->set_context($context);
 $PAGE->set_title($cm->name);
 $PAGE->add_body_class('limitedwidth');
 
+// Moodle 5.3+: hide the linear navigation sticky footer and course index drawer.
+if (method_exists($PAGE, 'set_show_navigation_footer')) {
+    $PAGE->set_show_navigation_footer(false);
+}
+$PAGE->set_show_course_index(false);
+
 $factory = new \local_dixeo_editor\activity\activity_adapter_factory($DB);
 $activityadapter = $factory->create($cmid, $subid);
 
