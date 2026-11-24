@@ -60,6 +60,14 @@ $PAGE->set_show_course_index(false);
 $factory = new \local_dixeo_editor\activity\activity_adapter_factory($DB);
 $activityadapter = $factory->create($cmid, $subid);
 
+// The editor needs TinyMCE (forced over the user's preference). When the site has disabled it, explain what to do.
+if (!\local_dixeo_editor\local\tiny_editor::is_available()) {
+    echo $OUTPUT->header();
+    echo \local_dixeo_editor\output\tiny_unavailable::render($activityadapter->get_redirect_url($course->id, $cmid));
+    echo $OUTPUT->footer();
+    die();
+}
+
 $editorsession = \local_dixeo_editor\local\editor_session_repository::get_or_create_active(
     $cmid,
     $subid,

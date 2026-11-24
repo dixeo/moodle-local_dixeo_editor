@@ -72,4 +72,31 @@ class mod_editor_form extends \moodleform {
         $mform->setType($fieldname, PARAM_RAW);
         $mform->getElement($fieldname)->setAttributes($editorattributes);
     }
+
+    /**
+     * Load data, converting the content to HTML because the Dixeo editor only runs in TinyMCE.
+     *
+     * @param \stdClass|array $data Form data.
+     */
+    public function set_data($data) {
+        $fieldname = $this->_customdata['fieldname'];
+        $data = (array) $data;
+        if (isset($data[$fieldname]['text'], $data[$fieldname]['format'])) {
+            $data[$fieldname]['text'] = \local_dixeo_editor\local\tiny_editor::to_html(
+                (string) $data[$fieldname]['text'],
+                $data[$fieldname]['format']
+            );
+            $data[$fieldname]['format'] = FORMAT_HTML;
+        }
+        parent::set_data($data);
+    }
+
+    /**
+     * Display the form with TinyMCE, whatever editor the user prefers (the AI tools need it).
+     */
+    public function display() {
+        \local_dixeo_editor\local\tiny_editor::run(function () {
+            parent::display();
+        });
+    }
 }

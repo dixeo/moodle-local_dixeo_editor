@@ -36,6 +36,7 @@ class embedded_editor {
      * @param \context_module $context Module context.
      * @return array{html: string, sessionid: int} Editor markup and session id.
      * @throws \moodle_exception error:dixeo_disabled (local_dixeo) when Dixeo is off for the course or the site.
+     * @throws \moodle_exception error:tinyunavailable when TinyMCE is disabled on the site.
      */
     public static function render(\stdClass $cm, int $slideid, \context_module $context): array {
         global $CFG, $DB, $OUTPUT, $USER;
@@ -44,6 +45,7 @@ class embedded_editor {
 
         \local_dixeo_editor\local\editor_capability::require_edit_module($context);
         \local_dixeo\external\service_factory::get_settings_config()->require_enabled($context);
+        \local_dixeo_editor\local\tiny_editor::require_available();
 
         $factory = new \local_dixeo_editor\activity\activity_adapter_factory($DB);
         $activityadapter = $factory->create((int) $cm->id, $slideid);
